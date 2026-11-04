@@ -1,0 +1,6 @@
+node_modules/
+dist/
+tools/audio-test/
+*.log
+.DS_Store
+.vite/

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="description" content="Mantis Mayhem - an underwater mantis shrimp voxel fighting game.">
+<title>Mantis Mayhem</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect width='16' height='16' fill='%230b1e2b'/%3E%3Crect x='3' y='6' width='9' height='5' fill='%234a8a2f'/%3E%3Crect x='11' y='4' width='3' height='3' fill='%23d93a2b'/%3E%3Crect x='4' y='3' width='2' height='3' fill='%23f0c33c'/%3E%3Crect x='7' y='3' width='2' height='3' fill='%23f0c33c'/%3E%3Crect x='2' y='11' width='3' height='2' fill='%23d97a2b'/%3E%3Crect x='9' y='11' width='3' height='2' fill='%23d97a2b'/%3E%3C/svg%3E">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #04121a; touch-action: none; }
+  body { user-select: none; -webkit-user-select: none; }
+  #gl { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; display: block; outline: none; }
+  #ui { position: fixed; left: 0; top: 0; display: block; image-rendering: pixelated; image-rendering: crisp-edges; outline: none; cursor: none; }
+  #boot { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column;
+          color: #8ff0e0; font: 14px monospace; letter-spacing: 2px; background: radial-gradient(circle at 50% 40%, #0f3a4a, #04121a 70%); z-index: 5; }
+  #boot .bar { width: 220px; height: 10px; border: 2px solid #49c2bd; margin-top: 14px; image-rendering: pixelated; }
+  #boot .fill { height: 100%; width: 0%; background: #49c2bd; transition: width .2s; }
+  #boot .err { color: #ff6a4a; max-width: 70vw; margin-top: 16px; white-space: pre-wrap; font-size: 12px; }
+</style>
+</head>
+<body>
+<canvas id="gl" tabindex="0"></canvas>
+<canvas id="ui" tabindex="0"></canvas>
+<div id="boot"><div>MANTIS MAYHEM</div><div class="bar"><div class="fill" id="bootfill"></div></div><div id="bootmsg" style="margin-top:10px;font-size:11px;color:#49c2bd">loading the rig...</div></div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
