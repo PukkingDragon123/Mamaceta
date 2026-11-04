@@ -161,6 +161,27 @@ export class RustPitView extends StageBase {
       const c = mesh(chainGrid(len), VS_SM, [1.5, len, 1.5], [-12 + i * 4 + r() * 1.5, 9.5, -3.5 + r() * 2]);
       S.add(c); this.chains.push({ m: c, ph: r() * 6, amp: 0.02 + r() * 0.04, v: 0, a: 0 });
     }
+    // broken machinery: a busted pump engine with a cracked casing, a loose gear and a sparking cable
+    {
+      const mg = new VoxelGrid(40, 30, 24);
+      const mp = rustPaint(31, { rust: 0.7 });
+      mg.box(2, 0, 2, 38, 4, 22, 0x2a2f36); // skid
+      mg.box(4, 4, 4, 26, 20, 20, mp); // engine block
+      mg.box(6, 20, 6, 24, 24, 18, (x, y, z) => ((x % 4) ? 0x3a424c : 0x22272d)); // cooling fins
+      mg.cylinder('x', 12, 12, 26, 36, 6, mp); // pump housing
+      mg.cylinder('x', 12, 12, 34, 37, 7, 0x464e58);
+      mg.box(10, 8, 19, 18, 18, 21, null, { mode: 'carve' }); // crack / hole in the casing
+      mg.box(11, 9, 18, 17, 17, 19, { c: 0xff7a1a, e: 120 }); // glowing innards
+      for (let i = 0; i < 6; i++) mg.set(8 + i * 3, 4 + (i % 2), 21, 0xb5561f); // rivets
+      S.add(mesh(mg, VS_SM, [20, 0, 12], [3.9, 0, -5.4]));
+      const gg = new VoxelGrid(18, 18, 4);
+      gg.cylinder('z', 9, 9, 0, 4, 8, (x, y) => (Math.atan2(y - 9, x - 9) * 4 % 1 > 0.5 ? 0x6b7682 : 0x56616c));
+      gg.cylinder('z', 9, 9, 0, 4, 3, null, { mode: 'carve' });
+      for (let i = 0; i < 10; i++) { const a = (i / 10) * Math.PI * 2; gg.box(9 + Math.cos(a) * 8 - 1, 9 + Math.sin(a) * 8 - 1, 0, 9 + Math.cos(a) * 8 + 1, 9 + Math.sin(a) * 8 + 1, 4, 0x6b7682); }
+      this.gear = mesh(gg, VS_SM, [9, 9, 2], [6.6, 0.55, -4.6], { rot: [0, 0.4, 0.3] });
+      S.add(this.gear);
+      this.sparkAt = new THREE.Vector3(4.6, 1.1, -4.1);
+    }
     // referee
     this.ref = buildReferee();
     this.ref.group.position.set(-2.6, 0, -4.4);
@@ -209,6 +230,11 @@ export class RustPitView extends StageBase {
       lamp.userData.light.intensity = lamp.userData.light.userData.base * (1 - this.dark * 0.92) * fl;
     }
     this.vents.update(dt);
+    if (this.gear) this.gear.rotation.z = Math.sin(this.t * 0.7) * 0.15 + 0.3;
+    if (this.sparkAt && Math.random() < dt * 1.4) {
+      this.fx.sparks(this.sparkAt.x, this.sparkAt.y, 6 + Math.floor(Math.random() * 6), { colors: [0xffd080, 0xffffff, 0x9ff3ff], sp1: 4, life: 0.5, grav: -6 });
+      this.fx.lightPop(this.sparkAt.x, this.sparkAt.y, 0x9fd8ff, 8, 0.08, 4);
+    }
     this.ref.update(dt, s);
     this.syncProps(s, dt);
   }

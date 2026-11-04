@@ -341,7 +341,7 @@ export class LockerRoom {
 export const LOCKER_SLOTS = {
   bench: { x: -2.4, z: -4.35, face: -1, seat: true },
   select: {
-    jim: { x: -7.3, z: -2.4, face: 1 },
+    jim: { x: -6.85, z: -2.4, face: 1 },
     brutus: { x: -4.4, z: -4.35, face: 1, seat: true },
     bobby: { x: -1.1, z: -2.2, face: -1 },
     mimi: { x: 1.8, z: -3.0, face: -1, crate: true },
