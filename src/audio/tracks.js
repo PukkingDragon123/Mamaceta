@@ -18,17 +18,17 @@ export const TRACK_DEFS = {
     bpm: 92, key: 'A harmonic', swing16: 0.54, gain: 0.71,
     channels: {
       gtr: { inst: 'nylon', gain: 0.5, pan: -0.25, rev: 0.25, lp: 3800 },
-      mar: { inst: 'marimba', gain: 0.62, pan: 0.15, rev: 0.32 },
+      mar: { inst: 'marimba', gain: 0.78, pan: 0.15, rev: 0.32 },
       mar2: { inst: 'marimba', gain: 0.34, pan: 0.38, rev: 0.32 },
       vib: { inst: 'vibes', gain: 0.22, pan: -0.4, rev: 0.4, trem: [5.2, 0.3] },
-      bass: { inst: 'ubass', gain: 0.85 },
-      pad: { inst: 'pad', gain: 0.3, rev: 0.45, opts: { a: 1.4, r: 1.8, cut: 950, sweep: 0.09 } },
-      guiro: { inst: 'drum', gain: 0.3, pan: 0.32, hum: 0.004 },
-      clave: { inst: 'drum', gain: 0.22, pan: -0.38, rev: 0.15 },
-      kick: { inst: 'drum', gain: 0.55 },
-      conga: { inst: 'drum', gain: 0.4, pan: 0.18, rev: 0.1 },
+      bass: { inst: 'ubass', gain: 0.6 },
+      pad: { inst: 'pad', gain: 0.48, rev: 0.45, opts: { a: 1.4, r: 1.8, cut: 950, sweep: 0.09 } },
+      guiro: { inst: 'drum', gain: 0.48, pan: 0.32, hum: 0.004 },
+      clave: { inst: 'drum', gain: 0.35, pan: -0.38, rev: 0.15 },
+      kick: { inst: 'drum', gain: 0.5 },
+      conga: { inst: 'drum', gain: 0.5, pan: 0.18, rev: 0.1 },
       shk: { inst: 'drum', gain: 0.2, pan: -0.22 },
-      bub: { inst: 'bubble', gain: 0.32, pan: 0.3, rev: 0.6 },
+      bub: { inst: 'bubble', gain: 0.45, pan: 0.3, rev: 0.6 },
     },
     sections: {
       intro: {
@@ -117,15 +117,15 @@ export const TRACK_DEFS = {
   select: {
     bpm: 132, key: 'D major', gain: 0.45,
     channels: {
-      vih: { inst: 'vihuela', gain: 0.42, pan: -0.32, rev: 0.12 },
+      vih: { inst: 'vihuela', gain: 0.52, pan: -0.32, rev: 0.12 },
       gtr: { inst: 'nylon', gain: 0.34, pan: 0.32, rev: 0.15 },
-      tp1: { inst: 'brass', gain: 0.5, pan: -0.08, rev: 0.2, opts: { vibRate: 6.2, vib: 0.008 } },
-      tp2: { inst: 'brass', gain: 0.36, pan: 0.16, rev: 0.2, opts: { vibRate: 5.9, vib: 0.008 } },
-      bass: { inst: 'ebass', gain: 0.7 },
-      kick: { inst: 'drum', gain: 0.75 },
-      snare: { inst: 'drum', gain: 0.5, rev: 0.1 },
-      hat: { inst: 'drum', gain: 0.32, pan: 0.25 },
-      tamb: { inst: 'drum', gain: 0.2, pan: -0.25 },
+      tp1: { inst: 'brass', gain: 0.62, pan: -0.08, rev: 0.2, opts: { vibRate: 6.2, vib: 0.008 } },
+      tp2: { inst: 'brass', gain: 0.45, pan: 0.16, rev: 0.2, opts: { vibRate: 5.9, vib: 0.008 } },
+      bass: { inst: 'ebass', gain: 0.55 },
+      kick: { inst: 'drum', gain: 0.65 },
+      snare: { inst: 'drum', gain: 0.9, rev: 0.1 },
+      hat: { inst: 'drum', gain: 0.8, pan: 0.25 },
+      tamb: { inst: 'drum', gain: 0.36, pan: -0.25 },
       crash: { inst: 'drum', gain: 0.32, rev: 0.1 },
       tom: { inst: 'drum', gain: 0.5, rev: 0.1 },
     },
@@ -198,10 +198,10 @@ export const TRACK_DEFS = {
   doors: {
     bpm: 96, key: 'D harmonic', gain: 0.51,
     channels: {
-      tick: { inst: 'drum', gain: 0.4, pan: 0.3, rev: 0.15 },
-      drone: { inst: 'pad', gain: 0.42, rev: 0.3, opts: { a: 2.0, r: 2.0, cut: 520, sweep: 0.06 } },
+      tick: { inst: 'drum', gain: 1.0, pan: 0.3, rev: 0.15 },
+      drone: { inst: 'pad', gain: 0.55, rev: 0.3, opts: { a: 2.0, r: 2.0, cut: 520, sweep: 0.06 } },
       bone: { inst: 'bone', gain: 0.42, rev: 0.35, pan: -0.15, opts: { swell: 0.8, vibRate: 4.2, vib: 0.004 } },
-      bass: { inst: 'ubass', gain: 0.6 },
+      bass: { inst: 'ubass', gain: 0.7 },
       roll: { inst: 'drum', gain: 0.38, rev: 0.18, pan: 0.1 },
       timp: { inst: 'drum', gain: 0.62, rev: 0.25 },
       heart: { inst: 'drum', gain: 0.55 },
@@ -233,13 +233,13 @@ export const TRACK_DEFS = {
   rustpit: {
     bpm: 140, key: 'E phrygdom', gain: 0.39,
     channels: {
-      bass: { inst: 'dbass', gain: 0.62 },
+      bass: { inst: 'dbass', gain: 0.5 },
       kick: { inst: 'drum', gain: 0.78 },
-      snare: { inst: 'drum', gain: 0.52, rev: 0.12 },
-      clank: { inst: 'drum', gain: 0.36, pan: 0.32, rev: 0.25 },
-      anvil: { inst: 'drum', gain: 0.17, pan: -0.38, rev: 0.25 },
-      hat: { inst: 'drum', gain: 0.26, pan: 0.2 },
-      stab: { inst: 'brass', gain: 0.42, pan: -0.12, rev: 0.18, opts: { noVib: 1, scoop: 30, bright: 1.15 } },
+      snare: { inst: 'drum', gain: 0.92, rev: 0.12 },
+      clank: { inst: 'drum', gain: 0.72, pan: 0.32, rev: 0.25 },
+      anvil: { inst: 'drum', gain: 0.34, pan: -0.38, rev: 0.25 },
+      hat: { inst: 'drum', gain: 0.65, pan: 0.2 },
+      stab: { inst: 'brass', gain: 0.52, pan: -0.12, rev: 0.18, opts: { noVib: 1, scoop: 30, bright: 1.15 } },
       lead: { inst: 'brass', gain: 0.46, pan: 0.1, rev: 0.22, opts: { vibRate: 6, vib: 0.008, bright: 1.1 } },
       gtr: { inst: 'requinto', gain: 0.25, pan: -0.3, rev: 0.12 },
       conga: { inst: 'drum', gain: 0.4, pan: -0.25, rev: 0.08, layer: [0.2, 0.6] },
@@ -334,13 +334,15 @@ export const TRACK_DEFS = {
   cantina: {
     bpm: 120, key: 'G major', gain: 0.3,
     channels: {
-      acc: { inst: 'accordion', gain: 0.6, pan: 0.1, rev: 0.16, opts: { low: 0 } },
-      acc2: { inst: 'accordion', gain: 0.36, pan: 0.28, rev: 0.16 },
-      bajo: { inst: 'vihuela', gain: 0.4, pan: -0.3, rev: 0.1 },
-      tuba: { inst: 'tuba', gain: 0.72 },
+      acc: { inst: 'accordion', gain: 0.7, pan: 0.1, rev: 0.16, opts: { low: 0 } },
+      acc2: { inst: 'accordion', gain: 0.42, pan: 0.28, rev: 0.16 },
+      bajo: { inst: 'vihuela', gain: 0.9, pan: -0.3, rev: 0.1 },
+      tuba: { inst: 'tuba', gain: 0.5 },
       kick: { inst: 'drum', gain: 0.55 },
-      snare: { inst: 'drum', gain: 0.38, pan: 0.1, rev: 0.08 },
-      hat: { inst: 'drum', gain: 0.2, pan: 0.25 },
+      snare: { inst: 'drum', gain: 0.95, pan: 0.1, rev: 0.08 },
+      hat: { inst: 'drum', gain: 0.63, pan: 0.25 },
+      xtamb: { inst: 'drum', gain: 0.2, pan: -0.3, layer: [0.3, 0.8] },
+      xbongo: { inst: 'drum', gain: 0.3, pan: 0.32, layer: [0.5, 1.0] },
     },
     sections: {
       intro: {
@@ -363,6 +365,8 @@ export const TRACK_DEFS = {
           b.drum('kick', 'X.......X.......', { drum: 'kick' });
           b.drum('snare', '....x.......x...', { drum: 'snare' });
           b.drum('hat', '..x...x...x...x.', { drum: 'hat' });
+          b.drum('xtamb', 'x.o.x.o.x.o.x.o.', { drum: 'tamb' });
+          b.drum('xbongo', '..b.bb..b.b.bbb.', { map: { b: ['bongo', 0.7] } });
         },
       },
       B: {
@@ -376,6 +380,8 @@ export const TRACK_DEFS = {
           b.drum('kick', 'X.......X.......', { drum: 'kick' });
           b.drum('snare', '....x...g...x.g.', { drum: 'snare' });
           b.drum('hat', '..x...x...x...x.', { drum: 'hat' });
+          b.drum('xtamb', 'x.o.x.o.x.o.x.o.', { drum: 'tamb' });
+          b.drum('xbongo', '..b.bb..b.b.bbb.', { map: { b: ['bongo', 0.7] } });
         },
       },
     },
@@ -386,15 +392,17 @@ export const TRACK_DEFS = {
   cantina2: {
     bpm: 100, key: 'D harmonic', swing16: 0.53, gain: 0.67,
     channels: {
-      org: { inst: 'organ', gain: 0.52, pan: 0.05, rev: 0.22 },
+      org: { inst: 'organ', gain: 0.58, pan: 0.05, rev: 0.22 },
       req: { inst: 'requinto', gain: 0.32, pan: -0.32, rev: 0.18 },
       acc: { inst: 'accordion', gain: 0.24, pan: 0.3, rev: 0.12 },
-      bass: { inst: 'ebass', gain: 0.75 },
-      guiro: { inst: 'drum', gain: 0.32, pan: 0.32 },
+      bass: { inst: 'ebass', gain: 0.6 },
+      guiro: { inst: 'drum', gain: 0.5, pan: 0.32 },
       conga: { inst: 'drum', gain: 0.42, pan: -0.2, rev: 0.08 },
       kick: { inst: 'drum', gain: 0.55 },
       timb: { inst: 'drum', gain: 0.32, pan: 0.25, rev: 0.12 },
       cow: { inst: 'drum', gain: 0.14, pan: 0.15 },
+      xshk: { inst: 'drum', gain: 0.18, pan: -0.3, layer: [0.3, 0.8] },
+      xconga: { inst: 'drum', gain: 0.32, pan: 0.35, layer: [0.5, 1.0] },
     },
     sections: {
       intro: {
@@ -418,6 +426,8 @@ export const TRACK_DEFS = {
           b.drum('conga', '....s..hl...s.hh', { map: CONGA });
           b.drum('cow', 'x...x...x...x...', { drum: 'cowbell' });
           b.drum('timb', '................|................|................|............hhHH', { map: TIMB });
+          b.drum('xshk', 'xoxoxoxoxoxoxoxo', { drum: 'shaker' });
+          b.drum('xconga', 'h.h.l.hhh.h.l.ll', { map: CONGA });
         },
       },
       B: {
@@ -433,6 +443,8 @@ export const TRACK_DEFS = {
           b.drum('conga', '....s..hl...s.hh', { map: CONGA });
           b.drum('cow', 'x...x...x...x...', { drum: 'cowbell' });
           b.drum('timb', '................|............hhHH', { map: TIMB });
+          b.drum('xshk', 'xoxoxoxoxoxoxoxo', { drum: 'shaker' });
+          b.drum('xconga', 'h.h.l.hhh.h.l.ll', { map: CONGA });
         },
       },
     },
@@ -446,12 +458,12 @@ export const TRACK_DEFS = {
     channels: {
       tp: { inst: 'mute', gain: 0.55, pan: 0.18, rev: 0.28 },
       vib: { inst: 'vibes', gain: 0.42, pan: -0.25, rev: 0.32, trem: [4.8, 0.3] },
-      pno: { inst: 'epiano', gain: 0.3, pan: -0.1, rev: 0.22 },
-      bass: { inst: 'ubass', gain: 0.85, hum: 0.006 },
-      ride: { inst: 'drum', gain: 0.32, pan: 0.32 },
-      brush: { inst: 'drum', gain: 0.38, pan: -0.05 },
-      swish: { inst: 'drum', gain: 0.32 },
-      hatf: { inst: 'drum', gain: 0.12, pan: 0.2 },
+      pno: { inst: 'epiano', gain: 0.48, pan: -0.1, rev: 0.22 },
+      bass: { inst: 'ubass', gain: 0.67, hum: 0.006 },
+      ride: { inst: 'drum', gain: 0.57, pan: 0.32 },
+      brush: { inst: 'drum', gain: 0.76, pan: -0.05 },
+      swish: { inst: 'drum', gain: 0.45 },
+      hatf: { inst: 'drum', gain: 0.19, pan: 0.2 },
     },
     sections: {
       intro: {
@@ -499,16 +511,16 @@ export const TRACK_DEFS = {
   results: {
     bpm: 118, key: 'C major', gain: 0.5,
     channels: {
-      tp1: { inst: 'brass', gain: 0.48, pan: -0.1, rev: 0.22, opts: { vibRate: 6, vib: 0.008 } },
-      tp2: { inst: 'brass', gain: 0.34, pan: 0.16, rev: 0.22, opts: { vibRate: 5.8, vib: 0.008 } },
+      tp1: { inst: 'brass', gain: 0.6, pan: -0.1, rev: 0.22, opts: { vibRate: 6, vib: 0.008 } },
+      tp2: { inst: 'brass', gain: 0.42, pan: 0.16, rev: 0.22, opts: { vibRate: 5.8, vib: 0.008 } },
       vih: { inst: 'vihuela', gain: 0.38, pan: -0.3, rev: 0.12 },
-      mar: { inst: 'marimba', gain: 0.55, pan: 0.25, rev: 0.25 },
-      bass: { inst: 'ebass', gain: 0.7 },
-      kick: { inst: 'drum', gain: 0.7 },
-      clap: { inst: 'drum', gain: 0.4, rev: 0.15 },
+      mar: { inst: 'marimba', gain: 0.78, pan: 0.25, rev: 0.25 },
+      bass: { inst: 'ebass', gain: 0.55 },
+      kick: { inst: 'drum', gain: 0.6 },
+      clap: { inst: 'drum', gain: 0.63, rev: 0.15 },
       snare: { inst: 'drum', gain: 0.35, rev: 0.1 },
-      hat: { inst: 'drum', gain: 0.28, pan: 0.22 },
-      tamb: { inst: 'drum', gain: 0.18, pan: -0.25 },
+      hat: { inst: 'drum', gain: 0.7, pan: 0.22 },
+      tamb: { inst: 'drum', gain: 0.25, pan: -0.25 },
       crash: { inst: 'drum', gain: 0.3, rev: 0.1 },
     },
     sections: {
@@ -562,14 +574,14 @@ export const TRACK_DEFS = {
   training: {
     bpm: 100, key: 'C major', swing16: 0.58, gain: 0.65,
     channels: {
-      ep: { inst: 'epiano', gain: 0.4, pan: -0.08, rev: 0.25, lp: 4000 },
-      vib: { inst: 'vibes', gain: 0.38, pan: 0.22, rev: 0.38, trem: [4.6, 0.3] },
-      gtr: { inst: 'nylon', gain: 0.42, pan: -0.3, rev: 0.25 },
-      bass: { inst: 'ubass', gain: 0.85 },
+      ep: { inst: 'epiano', gain: 0.5, pan: -0.08, rev: 0.25, lp: 4000 },
+      vib: { inst: 'vibes', gain: 0.95, pan: 0.22, rev: 0.38, trem: [4.6, 0.3] },
+      gtr: { inst: 'nylon', gain: 0.85, pan: -0.3, rev: 0.25 },
+      bass: { inst: 'ubass', gain: 0.6 },
       kick: { inst: 'drum', gain: 0.6 },
-      rim: { inst: 'drum', gain: 0.42, rev: 0.12 },
-      hat: { inst: 'drum', gain: 0.2, pan: 0.25 },
-      shk: { inst: 'drum', gain: 0.14, pan: -0.25 },
+      rim: { inst: 'drum', gain: 0.6, rev: 0.12 },
+      hat: { inst: 'drum', gain: 0.4, pan: 0.25 },
+      shk: { inst: 'drum', gain: 0.22, pan: -0.25 },
       bub: { inst: 'bubble', gain: 0.25, pan: -0.3, rev: 0.6 },
     },
     sections: {
@@ -611,8 +623,8 @@ export const TRACK_DEFS = {
     channels: {
       drone: { inst: 'pad', gain: 0.5, rev: 0.35, opts: { a: 3, r: 3, cut: 380, sweep: 0.07 } },
       heart: { inst: 'drum', gain: 0.75 },
-      box: { inst: 'musicbox', gain: 0.42, pan: 0.2, rev: 0.55, detune: 38 },
-      swell: { inst: 'bone', gain: 0.3, pan: -0.2, rev: 0.45, opts: { swell: 0.85, vibRate: 7, vib: 0.012 } },
+      box: { inst: 'musicbox', gain: 0.75, pan: 0.2, rev: 0.55, detune: 38 },
+      swell: { inst: 'bone', gain: 0.24, pan: -0.2, rev: 0.45, opts: { swell: 0.85, vibRate: 7, vib: 0.012 } },
       bell: { inst: 'bell', gain: 0.32, rev: 0.6, pan: -0.1, opts: { len: 1.6 } },
       cym: { inst: 'drum', gain: 0.3, rev: 0.35 },
       sub: { inst: 'ubass', gain: 0.6 },

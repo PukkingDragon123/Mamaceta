@@ -54,35 +54,45 @@ function normalizeRms(d, target) {
 }
 
 const noiseCache = new Map();
-/** Shared looping noise buffers {white, pink, brown} at a sample rate (RMS 0.3 each). */
+/**
+ * Shared looping noise buffers {white, pink, brown} at a sample rate (RMS 0.3 each).
+ * Each colour is generated lazily on first access (cheap xorshift generator).
+ */
 export function getNoise(sr, ctx) {
   let n = noiseCache.get(sr);
   if (n) return n;
-  const len = Math.floor(sr * 2.5);
-  const rng = makeRng(0xc0ffee);
-  const W = createBuffer(1, len, sr, ctx), P = createBuffer(1, len, sr, ctx), B = createBuffer(1, len, sr, ctx);
-  if (!W || !P || !B) return null;
-  const w = W.getChannelData(0), p = P.getChannelData(0), b = B.getChannelData(0);
-  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, br = 0;
-  for (let i = 0; i < len; i++) {
-    const x = rng() * 2 - 1;
-    w[i] = x;
-    b0 = 0.99886 * b0 + x * 0.0555179; b1 = 0.99332 * b1 + x * 0.0750759;
-    b2 = 0.969 * b2 + x * 0.153852; b3 = 0.8665 * b3 + x * 0.3104856;
-    b4 = 0.55 * b4 + x * 0.5329522; b5 = -0.7616 * b5 - x * 0.016898;
-    p[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + x * 0.5362;
-    b6 = x * 0.115926;
-    br = (br + 0.02 * x) / 1.02;
-    b[i] = br;
-  }
-  // brown noise: remove DC + linear trend so the loop point is seamless
-  let mean = 0;
-  for (let i = 0; i < len; i++) mean += b[i];
-  mean /= len;
-  const drift = b[len - 1] - b[0];
-  for (let i = 0; i < len; i++) b[i] -= mean + drift * (i / (len - 1) - 0.5);
-  normalizeRms(w, 0.3); normalizeRms(p, 0.3); normalizeRms(b, 0.3);
-  n = { white: W, pink: P, brown: B };
+  const len = Math.floor(sr * 2);
+  const make = (color) => {
+    const B = createBuffer(1, len, sr, ctx);
+    if (!B) return null;
+    const d = B.getChannelData(0);
+    let x = (0x2545f491 ^ color.length * 0x9e3779b9) | 0;
+    let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, br = 0;
+    for (let i = 0; i < len; i++) {
+      x ^= x << 13; x ^= x >>> 17; x ^= x << 5;
+      const w = x / 2147483648;
+      if (color === 'white') d[i] = w;
+      else if (color === 'pink') {
+        b0 = 0.99886 * b0 + w * 0.0555179; b1 = 0.99332 * b1 + w * 0.0750759;
+        b2 = 0.969 * b2 + w * 0.153852; b3 = 0.8665 * b3 + w * 0.3104856;
+        b4 = 0.55 * b4 + w * 0.5329522; b5 = -0.7616 * b5 - w * 0.016898;
+        d[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362;
+        b6 = w * 0.115926;
+      } else { br = (br + 0.02 * w) / 1.02; d[i] = br; }
+    }
+    if (color === 'brown') { // remove DC + linear trend so the loop point is seamless
+      let mean = 0;
+      for (let i = 0; i < len; i++) mean += d[i];
+      mean /= len;
+      const drift = d[len - 1] - d[0];
+      for (let i = 0; i < len; i++) d[i] -= mean + drift * (i / (len - 1) - 0.5);
+    }
+    normalizeRms(d, 0.3);
+    return B;
+  };
+  const cache = {};
+  n = {};
+  for (const c of ['white', 'pink', 'brown']) Object.defineProperty(n, c, { enumerable: true, get: () => cache[c] || (cache[c] = make(c)) });
   noiseCache.set(sr, n);
   return n;
 }
@@ -129,17 +139,18 @@ export function makeIR(sr, opts = {}, ctx) {
   const len = Math.floor(sr * dur);
   const buf = createBuffer(2, len, sr, ctx);
   if (!buf) return null;
-  const decay = 6.9 / dur;
+  const envMul = Math.exp(-6.9 / dur / sr);             // amplitude decay per sample (-60 dB at dur)
+  const fcMul32 = Math.exp((-3.6 * dark * 32) / sr);    // high-frequency damping, updated every 32 samples
+  const onset0 = Math.floor(pre * 0.5 * sr), onsetLen = Math.max(1, Math.floor(0.02 * sr));
   for (let ch = 0; ch < 2; ch++) {
     const rng = makeRng(seed * 7919 + ch * 104729);
     const d = buf.getChannelData(ch);
-    let lp1 = 0, lp2 = 0;
+    let lp1 = 0, lp2 = 0, env = 1, fcEnv = 1, a = 0;
     for (let i = 0; i < len; i++) {
-      const t = i / sr;
-      const env = Math.exp(-t * decay) * Math.min(1, Math.max(0, (t - pre * 0.5) / 0.02));
-      const x = (rng() * 2 - 1) * env;
-      const fc = 520 + bright * Math.exp(-t * 3.6 * dark);
-      const a = 1 - Math.exp(-TAU * fc / sr);
+      if ((i & 31) === 0) { a = 1 - Math.exp((-TAU * (520 + bright * fcEnv)) / sr); fcEnv *= fcMul32; }
+      const on = i < onset0 ? 0 : i - onset0 >= onsetLen ? 1 : (i - onset0) / onsetLen;
+      const x = (rng() * 2 - 1) * env * on;
+      env *= envMul;
       lp1 += a * (x - lp1);
       lp2 += a * (lp1 - lp2);
       d[i] = lp2;
@@ -152,9 +163,8 @@ export function makeIR(sr, opts = {}, ctx) {
       for (let j = 0; j < 24 && idx + j < len; j++) d[idx + j] += amp * Math.exp(-j / 5) * 0.35;
     }
     if (metal > 0) {
-      const tmp = Float32Array.from(d);
-      const r1 = biquadRun(Float32Array.from(tmp), biquadCoefs('bandpass', 290 + ch * 13, 9, sr));
-      const r2 = biquadRun(Float32Array.from(tmp), biquadCoefs('bandpass', 1130 - ch * 37, 12, sr));
+      const r1 = biquadRun(d.slice(), biquadCoefs('bandpass', 290 + ch * 13, 9, sr));
+      const r2 = biquadRun(d.slice(), biquadCoefs('bandpass', 1130 - ch * 37, 12, sr));
       for (let i = 0; i < len; i++) d[i] += (r1[i] * 2.2 + r2[i] * 1.6) * metal;
     }
     // fade out the very end
@@ -263,7 +273,7 @@ export function getWave(ctx, kind) {
 
 // ---------------------------------------------------------------- Karplus-Strong plucked string
 const ksCache = new Map();
-const KS_MAX = 64;
+const KS_MAX = 48;
 /**
  * Returns {buf, rate} — a plucked nylon/vihuela string; play with playbackRate = rate for exact pitch.
  * kind: 'nylon' (warm, long) | 'vihuela' (bright, short) | 'requinto' (bright, mid)

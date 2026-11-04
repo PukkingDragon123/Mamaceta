@@ -92,7 +92,6 @@ export class AudioEngine {
     this.sfxRevIn = g(1);
     this.sfxConv = c.createConvolver();
     this.sfxConv.normalize = false;
-    this.sfxConv.buffer = makeIR(c.sampleRate, { dur: 1.6, seed: 7, dark: 1, metal: 0.22 }, c);
     this.sfxRevIn.connect(this.sfxConv);
     this.sfxConv.connect(this.sfxIn);
     this.voiceIn = g(VOICE_TRIM, this.sfxIn);
@@ -107,7 +106,13 @@ export class AudioEngine {
     this.musicRevIn = g(1);
     this.musicConv = c.createConvolver();
     this.musicConv.normalize = false;
-    this.musicConv.buffer = makeIR(c.sampleRate, { dur: 1.8, seed: 3, dark: 0.8, metal: 0.08, bright: 6500 }, c);
+    // Impulse responses are generated in JS; live engines do it in later tasks so init() stays light.
+    const irs = [
+      () => { this.sfxConv.buffer = makeIR(c.sampleRate, { dur: 1.6, seed: 7, dark: 1, metal: 0.22 }, c); },
+      () => { this.musicConv.buffer = makeIR(c.sampleRate, { dur: 1.8, seed: 3, dark: 0.8, metal: 0.08, bright: 6500 }, c); },
+    ];
+    if (this.live && typeof setTimeout !== 'undefined') irs.forEach((f, i) => setTimeout(() => { try { f(); } catch (e) { /* no reverb */ } }, 30 + i * 40));
+    else irs.forEach((f) => f());
     this.musicRevIn.connect(this.musicConv);
     this.musicConv.connect(this.musicIn);
 

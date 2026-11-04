@@ -16,7 +16,7 @@ export const VOICES = {
   molt: { base: 205, range: 3, rate: 0.88, wave: 'sawtooth', fs: 1.08, q1: 7, q2: 10, vib: [5.6, 0.03], rasp: 0.35, glide: [1.03, 0.96], gain: 1.75 },
   ref: { base: 118, range: 2.5, rate: 1.12, wave: 'sawtooth', fs: 0.92, q1: 6, q2: 8, drive: 2.5, rasp: 0.12, glide: [1.0, 0.93], gain: 1.32 },
   bartender: { base: 96, range: 2, rate: 0.85, wave: '~voice', fs: 0.86, q1: 6, q2: 8, lp: 2300, glide: [1.0, 0.97], gain: 0.66, body: 0.4 },
-  demon: { base: 56, range: 2, rate: 0.62, wave: 'sawtooth', fs: 0.68, q1: 6, q2: 8, drive: 5, sub: 0.6, rasp: 0.4, glide: [1.0, 0.9], gain: 0.58, body: 0.3 },
+  demon: { base: 56, range: 2, rate: 0.62, wave: 'sawtooth', fs: 0.68, q1: 7, q2: 9, drive: 3.5, sub: 0.6, rasp: 0.16, glide: [1.0, 0.9], gain: 0.48, body: 0.4, lp: 1100 },
   puru: { base: 980, range: 5, rate: 1.3, squeak: 1, gain: 0.8 },
 };
 

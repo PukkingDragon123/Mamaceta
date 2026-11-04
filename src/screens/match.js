@@ -72,6 +72,11 @@ export class MatchScreen {
     this.netWait = 0;
     this.lastHitInfo = null;
     this.musicTrack = st.music || 'rustpit';
+    if (cfg.net) {
+      cfg.net.bindSim(this.sim);
+      cfg.net.onDisconnect = (msg) => { this.netLost = msg || 'Opponent disconnected'; };
+      cfg.net.onMessage = (m) => { if (m.t === 'bye') this.netLost = 'Opponent left the match'; };
+    }
     Sound.music(cfg.mode === 'training' ? 'training' : this.musicTrack, { fade: 1.5 });
     Sound.muffle(false);
     this.endTimer = 0;
@@ -81,6 +86,7 @@ export class MatchScreen {
   }
 
   exit() {
+    if (this.keepAlive) { this.keepAlive = false; return; }
     for (const v of this.views || []) v.dispose();
     this.stage?.dispose();
     this.particles?.dispose();
@@ -145,6 +151,11 @@ export class MatchScreen {
     const alpha = clamp(this.acc / STEP, 0, 1);
     this.renderViews(dt, alpha);
     if (this.sim.s.done) this.finish();
+    if (this.netLost && !this.netLostShown) {
+      this.netLostShown = true;
+      g.toast(this.netLost, P.red4);
+      setTimeout(() => { this.cfg.net?.close(); this.cfg.onQuit?.(); }, 1800);
+    }
   }
 
   netStep() {

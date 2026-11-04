@@ -8,7 +8,7 @@
 import { mtof, clamp, ksNote, tanhCurve, fuzzCurve } from './dsp.js';
 import { envADSR, envPoints } from './synth.js';
 
-const KS_SR = 32000;
+const KS_RATE = { nylon: 22050, vihuela: 32000, requinto: 32000 }; // warm nylon needs less bandwidth
 
 // ====================================================================== sampled melodic instruments
 export const SAMPLE_DEFS = {
@@ -381,7 +381,7 @@ export function playDrum(S, name, t, vel, to, rate = 1) {
 
 // ====================================================================== guitar (Karplus-Strong)
 export function pluck(S, midi, t, dur, vel, to, kind = 'nylon') {
-  const ks = ksNote(KS_SR, midi, kind, S.ctx);
+  const ks = ksNote(KS_RATE[kind] || 32000, midi, kind, S.ctx);
   if (!ks) return;
   const src = S.ctx.createBufferSource();
   src.buffer = ks.buf;
@@ -428,7 +428,7 @@ export function brass(S, midi, t, dur, vel, to, o = {}) {
   const end = envADSR(amp.gain, t, dur, { a, d: 0.12, s: o.s ?? 0.78, r, peak: vel * 0.5 });
   const lpf = S.lp(f * 2, 1.1, amp);
   envADSR(lpf.frequency, t, dur, { a: a * 1.15, d: 0.2, s: 0.62, r, peak: Math.min(f * (2.2 + 5.5 * vel) * (o.bright ?? 1), 9000), base: f * 1.1 });
-  const sat = S.shaper(tanhCurve(1.7), lpf);
+  const sat = S.shaper(tanhCurve(1.7), lpf, 'none');
   const scoop = o.scoop ?? 40;
   const oscs = [];
   const spec = [['sawtooth', -7, 0.42], ['sawtooth', 7, 0.42], ['~pulse35', 0, 0.28]];
@@ -484,7 +484,7 @@ export function bone(S, midi, t, dur, vel, to, o = {}) {
     const w = S.lfo(o.wah, f * 1.2, lpf.frequency, t, end);
     w.g.gain.setValueAtTime(0, t); w.g.gain.linearRampToValueAtTime(f * 1.2, t + 0.15);
   }
-  const sat = S.shaper(tanhCurve(1.4), lpf);
+  const sat = S.shaper(tanhCurve(1.4), lpf, 'none');
   const oscs = [];
   for (const det of [-5, 5]) {
     const osc = S.osc('sawtooth', o.from ? mtof(o.from) : f, t, end + 0.03, sat);

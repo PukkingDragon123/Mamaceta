@@ -18,7 +18,7 @@ export function keyLabel(code) {
   if (code.startsWith('Key')) return code.slice(3);
   if (code.startsWith('Digit')) return code.slice(5);
   if (code.startsWith('Numpad')) return 'N' + code.slice(6);
-  const map = { ArrowLeft: '←', ArrowRight: '→', ArrowUp: '↑', ArrowDown: '↓', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Space: 'SPC', Enter: 'ENT', ShiftLeft: 'LSHF', ShiftRight: 'RSHF', ControlLeft: 'LCTL', ControlRight: 'RCTL', AltLeft: 'LALT', AltRight: 'RALT', Backspace: 'BKSP', Tab: 'TAB', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=', Backquote: '`' };
+  const map = { ArrowLeft: '<', ArrowRight: '>', ArrowUp: '^', ArrowDown: 'v', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Space: 'SPC', Enter: 'ENT', ShiftLeft: 'LSHF', ShiftRight: 'RSHF', ControlLeft: 'LCTL', ControlRight: 'RCTL', AltLeft: 'LALT', AltRight: 'RALT', Backspace: 'BKSP', Tab: 'TAB', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=', Backquote: '`' };
   return map[code] || code.slice(0, 4).toUpperCase();
 }
 

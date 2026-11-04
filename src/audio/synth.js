@@ -196,7 +196,7 @@ export class Synth {
   }
   noiseSrc(color = 'white', t = 0, end, to, rate = 1) {
     const s = this.ctx.createBufferSource();
-    s.buffer = this.noiseBufs[color] || this.noiseBufs.white;
+    s.buffer = (color === 'pink' || color === 'brown' ? this.noiseBufs[color] : null) || this.noiseBufs.white;
     s.loop = true;
     s.playbackRate.value = rate;
     this._to(s, to);

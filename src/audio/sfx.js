@@ -322,22 +322,24 @@ export const SFX = {
       S.metal({ t, f: 160, d: 0.5, peak: 0.15, strike: 0 });
     } },
 
-  cavitation: { lvl: -11, v: 3, len: 0.42, rev: 0.14, prio: 4, sr: 'hi',
+  cavitation: { lvl: -11, v: 3, len: 0.45, rev: 0.14, prio: 4, sr: 'hi',
     fn(S, t) {
-      // 1) the snap: ultra-short broadband burst, saturated so it is dense rather than just peaky
-      const dr = S.drive(4);
-      S.noise({ t, a: 0.0002, d: 0.005, peak: 1, f: [['hp', 700]], to: dr });
-      // 2) ringing crack body (shell + bubble-wall resonances), into the same saturator
+      // 1) the snap: ultra-sharp transient + a short saturated burst (firecracker-like, dense not just peaky)
+      const dr = S.drive(5);
+      S.noise({ t, a: 0.0002, d: 0.004, peak: 1, f: [['hp', 600]], to: dr });
+      S.noise({ t, a: 0.0003, d: 0.014, peak: 0.6, f: [['bp', 2600, 0.7]], to: dr });
+      // 2) ringing crack body (shell + bubble-wall resonances) into the same saturator
       const r = S.res([[S.r(2300, 2800), 5, 1], [S.r(4600, 5400), 6, 0.8], [S.r(8200, 9200), 5, 0.5]], dr);
       S.noise({ t, a: 0.0002, d: 0.012, peak: 3, to: r });
       // 3) the "pop" of the collapsing cavitation bubble, with weight
-      S.tone({ f: 900, f1: 140, ft: 0.03, t, a: 0.0004, d: 0.05, peak: 0.8, to: S.drive(2) });
-      S.thump({ t, f0: 160, f1: 60, ft: 0.04, d: 0.09, peak: 0.6, click: 0 });
+      S.tone({ f: 1100, f1: 180, ft: 0.025, t, a: 0.0004, d: 0.06, peak: 0.9, to: S.drive(2.5) });
+      S.thump({ t, f0: 170, f1: 55, ft: 0.05, d: 0.14, peak: 0.8, click: 0, drive: 2 });
       // 4) a smaller reflected snap
-      S.noise({ t: t + 0.007, a: 0.0002, d: 0.003, peak: 0.4, f: [['hp', 1500]] });
-      // 5) brief high-frequency sizzle: dense micro-crackle above 4 kHz + hiss
-      S.grains({ t: t + 0.003, dur: 0.26, rate: (x) => 4000 * Math.pow(1 - x, 1.4) + 120, glen: 0.00012, peak: 0.6, amp: (x) => Math.pow(1 - x, 1.6), f: [['hp', 4200]] });
-      S.noise({ t: t + 0.004, a: 0.003, d: 0.2, peak: 0.22, f: [['hp', 5500]] });
+      S.noise({ t: t + 0.007, a: 0.0002, d: 0.004, peak: 0.45, f: [['hp', 1500]], to: dr });
+      // 5) brief high-frequency sizzle: dense micro-crackle + mid crackle + hiss
+      S.grains({ t: t + 0.003, dur: 0.3, rate: (x) => 5000 * Math.pow(1 - x, 1.3) + 150, glen: 0.00012, peak: 0.8, amp: (x) => Math.pow(1 - x, 1.4), f: [['hp', 3800]] });
+      S.grains({ t: t + 0.004, dur: 0.12, rate: (x) => 1500 * (1 - x) + 100, glen: 0.0004, peak: 0.35, f: [['bp', 2500, 0.8]] });
+      S.noise({ t: t + 0.004, a: 0.003, d: 0.22, peak: 0.3, f: [['hp', 5000]] });
     } },
 
   shockwave: { lvl: -11, v: 2, len: 2.0, rev: 0.3, prio: 3, sr: 'lo',

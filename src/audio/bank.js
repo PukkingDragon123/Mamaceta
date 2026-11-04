@@ -56,6 +56,7 @@ export class SoundBank {
     this.complete = false;
     this.promise = null;
     this.warnings = [];
+    this.slices = []; // debug: synchronous ms per render slice
     this.buildJobs();
   }
 
@@ -106,7 +107,10 @@ export class SoundBank {
     const S = new Synth(oc, out, { rng: makeRng(seed), bank: this });
     def.fn(S, 0.004, job.param, job.variant);
     const buf = await renderOffline(oc);
-    return this.finish(buf, def, job);
+    const t1 = typeof performance !== 'undefined' ? performance.now() : 0;
+    const r = this.finish(buf, def, job);
+    if (r && typeof performance !== 'undefined') r.finishMs = performance.now() - t1;
+    return r;
   }
 
   finish(buf, def, job) {
@@ -139,15 +143,28 @@ export class SoundBank {
 
   warn(msg) { this.warnings.push(msg); if (typeof console !== 'undefined') console.warn('[audio] ' + msg); }
 
-  /** Render everything (idempotent). onProgress(done, total). */
-  renderAll({ batch = 6, onProgress } = {}) {
+  /**
+   * Render everything (idempotent). Work is time-sliced: each main-thread slice builds render graphs
+   * for at most ~`budgetMs` (and `batch` jobs), then yields while the renders run off-thread.
+   */
+  renderAll({ batch = 8, budgetMs = 8, onProgress } = {}) {
     if (this.promise) return this.promise;
     this.promise = (async () => {
       if (!offlineCtor()) { this.warn('OfflineAudioContext unavailable: no pre-rendered sounds'); this.complete = true; return; }
+      const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+      await yieldToMain(); // never do render work inside the caller's task (e.g. Audio.init())
       while (this.jobs.length) {
-        const chunk = this.jobs.splice(0, batch);
-        await Promise.all(chunk.map((j) => this.renderJob(j).then((r) => this.store(j, r), (e) => this.warn(`render failed ${j.key}: ${e && e.message}`))));
-        this.done += chunk.length;
+        const t0 = now();
+        const inflight = [];
+        while (this.jobs.length && inflight.length < batch && (inflight.length === 0 || now() - t0 < budgetMs)) {
+          const j = this.jobs.shift();
+          let p;
+          try { p = this.renderJob(j); } catch (e) { p = Promise.reject(e); }
+          inflight.push(p.then((r) => this.store(j, r), (e) => this.warn(`render failed ${j.key}: ${e && e.message}`)));
+        }
+        if (this.slices.length < 400) this.slices.push({ ms: +(now() - t0).toFixed(1), n: inflight.length });
+        await Promise.all(inflight);
+        this.done += inflight.length;
         if (onProgress) { try { onProgress(this.done, this.total); } catch (e) { /* ignore */ } }
         await yieldToMain();
       }
