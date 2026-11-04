@@ -586,7 +586,8 @@ export const INST = {
   nylon: (S, ev, t, dur, vel, to) => guitar(S, ev, t, dur, vel, to, 'nylon'),
   vihuela: (S, ev, t, dur, vel, to) => guitar(S, ev, t, dur, vel, to, 'vihuela'),
   requinto: (S, ev, t, dur, vel, to) => guitar(S, ev, t, dur, vel, to, 'requinto'),
-  marimba: (S, ev, t, dur, vel, to) => each(ev, (m) => playSample(S, 'marimba', m, t, null, vel, to)),
+  // rolled (tremolo) notes: each strike only needs to ring until the next one has taken over
+  marimba: (S, ev, t, dur, vel, to) => each(ev, (m) => playSample(S, 'marimba', m, t, ev.roll ? 0.12 : null, vel, to, 0.22)),
   vibes: (S, ev, t, dur, vel, to) => each(ev, (m) => playSample(S, 'vibes', m, t, dur + 0.45, vel, to, 0.35)),
   musicbox: (S, ev, t, dur, vel, to, ch) => each(ev, (m) => playSample(S, 'musicbox', m, t, null, vel, to, 0.1, (ch && ch.detune ? S.r(-ch.detune, ch.detune) : 0))),
   ubass: (S, ev, t, dur, vel, to) => each(ev, (m) => playSample(S, 'ubass', m, t, dur, vel, to, 0.06)),

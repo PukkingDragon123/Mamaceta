@@ -147,7 +147,7 @@ export class SoundBank {
    * Render everything (idempotent). Work is time-sliced: each main-thread slice builds render graphs
    * for at most ~`budgetMs` (and `batch` jobs), then yields while the renders run off-thread.
    */
-  renderAll({ batch = 8, budgetMs = 8, onProgress } = {}) {
+  renderAll({ batch = 4, budgetMs = 6, onProgress } = {}) {
     if (this.promise) return this.promise;
     this.promise = (async () => {
       if (!offlineCtor()) { this.warn('OfflineAudioContext unavailable: no pre-rendered sounds'); this.complete = true; return; }
@@ -156,13 +156,14 @@ export class SoundBank {
       while (this.jobs.length) {
         const t0 = now();
         const inflight = [];
+        const first = this.jobs[0].key;
         while (this.jobs.length && inflight.length < batch && (inflight.length === 0 || now() - t0 < budgetMs)) {
           const j = this.jobs.shift();
           let p;
           try { p = this.renderJob(j); } catch (e) { p = Promise.reject(e); }
           inflight.push(p.then((r) => this.store(j, r), (e) => this.warn(`render failed ${j.key}: ${e && e.message}`)));
         }
-        if (this.slices.length < 400) this.slices.push({ ms: +(now() - t0).toFixed(1), n: inflight.length });
+        if (this.slices.length < 400) this.slices.push({ ms: +(now() - t0).toFixed(1), n: inflight.length, first });
         await Promise.all(inflight);
         this.done += inflight.length;
         if (onProgress) { try { onProgress(this.done, this.total); } catch (e) { /* ignore */ } }

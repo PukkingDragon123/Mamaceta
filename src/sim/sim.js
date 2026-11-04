@@ -1189,6 +1189,11 @@ export class Sim {
       f.st = 'demonize'; f.sf = 0; f.vx = 0; f.vy = 0; f.mv = null; f.combo = 0;
       const o = s.fighters[1 - f.i];
       if (o.st === 'attack') { o.mv = null; this.setState(o, o.ground ? 'idle' : 'air'); }
+      // the opponent recoils in fear, giving the transformation some room
+      const away = o.x >= f.x ? 1 : -1;
+      const hw = CHARS[o.char].w / 2;
+      o.x = r4(clamp(o.x + away * 1.4, this.stage.left + hw, this.stage.right - hw));
+      o.vx = 0;
       this.event('demonStart', { i: f.i, x: f.x, y: f.y });
     }
   }

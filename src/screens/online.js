@@ -28,11 +28,12 @@ export class OnlineScreen {
   }
   makeNet() {
     this.net?.close();
+    this.ready = [false, false];
     this.net = new NetSession({ peerHost: this.peerHost, name: Save.data.name });
     this.net.onStatus = (s, err) => {
       if (s === 'error') { this.state = 'error'; this.msg = err; Sound.sfx('ui_error'); }
       if (s === 'connected') { Sound.sfx('ui_lock_in'); }
-      if (s === 'hello') { this.state = 'lobby'; this.ready = [false, false]; Sound.sfx('ui_challenge'); }
+      if (s === 'hello') { this.state = 'lobby'; this.sel = 0; Sound.sfx('ui_challenge'); }
     };
     this.net.onDisconnect = (msg) => { if (this.state === 'lobby' || this.state === 'waiting') { this.state = 'error'; this.msg = msg; } };
     this.net.onMessage = (m) => {
@@ -61,7 +62,7 @@ export class OnlineScreen {
     this.game.input.textHandler = null;
     this.state = 'opening'; this.msg = 'Knocking on the door...';
     const ok = await this.makeNet().joinRoom(this.code);
-    if (ok) { this.state = 'lobby-wait'; this.msg = 'Connected! Saying hello...'; }
+    if (ok && this.state !== 'lobby') { this.state = 'lobby-wait'; this.msg = 'Connected! Saying hello...'; }
   }
   editName() {
     this.editingName = true;

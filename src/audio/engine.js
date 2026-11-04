@@ -60,6 +60,7 @@ export class AudioEngine {
     this.vp = null;
     this.duckUntil = 0;
     this.duckDepth = 1;
+    this.duckEnv = null;
     this.lastCtxTime = null;
     this.lastUpdate = 0;
     this.timer = null;
@@ -84,7 +85,7 @@ export class AudioEngine {
     this.comp.release.value = 0.2;
     this.comp.connect(this.clip);
     this.master = g(this.vol.master, this.comp);
-    this.slowLP = lp(nyq * 0.98, 0.5, this.master);
+    this.slowLP = lp(nyq * 0.98, 0.707, this.master);
     this.mix = g(1, this.slowLP);
 
     // sfx bus (+ steel cavern reverb inside the bus so sfx volume governs it)
@@ -99,8 +100,8 @@ export class AudioEngine {
 
     // music bus: volume -> duck -> muffle (2 lowpasses = 24 dB/oct) ; reverb inside the bus
     this.muffleGain = g(1, this.mix);
-    this.muffle2 = lp(nyq * 0.98, 0.6, this.muffleGain);
-    this.muffle1 = lp(nyq * 0.98, 0.6, this.muffle2);
+    this.muffle2 = lp(nyq * 0.98, 0.707, this.muffleGain);
+    this.muffle1 = lp(nyq * 0.98, 0.707, this.muffle2);
     this.musicDuck = g(1, this.muffle1);
     this.musicIn = g(MUSIC_TRIM, this.musicDuck);
     this.musicRevIn = g(1);
@@ -126,6 +127,11 @@ export class AudioEngine {
       this.musicBend = c.createConstantSource();
       this.musicBend.offset.value = 0;
       this.musicBend.start();
+      // Chromium only processes a ConstantSource (and runs its setTargetAtTime ramp) while something
+      // pulls it; a silent sink keeps both bends current even when no sound is connected to them.
+      this.bendSink = g(0, c.destination);
+      this.sfxBend.connect(this.bendSink);
+      this.musicBend.connect(this.bendSink);
     }
   }
 
@@ -274,13 +280,25 @@ export class AudioEngine {
     this.muffleGain.gain.setTargetAtTime(on ? 0.9 : 1, now, 0.1);
   }
 
+  /** Current duck gain, computed from our own schedule (AudioParam.value is not reliable everywhere). */
+  duckValueAt(t) {
+    const d = this.duckEnv;
+    if (!d) return 1;
+    if (t <= d.t0) return d.v0;
+    if (t < d.t0 + 0.04) return d.v0 + (d.depth - d.v0) * ((t - d.t0) / 0.04);
+    if (t <= d.until) return d.depth;
+    if (t < d.until + 0.4) return d.depth + (1 - d.depth) * ((t - d.until) / 0.4);
+    return 1;
+  }
+
   duck(amount = 0.5, seconds = 0.6) {
     const now = this.ctx.currentTime;
     const p = this.musicDuck.gain;
     const target = 1 - clamp(amount == null ? 0.5 : +amount || 0, 0, 1);
     this.duckDepth = now < this.duckUntil ? Math.min(this.duckDepth, target) : target;
     this.duckUntil = Math.max(this.duckUntil, now + Math.max(0.05, seconds == null ? 0.6 : +seconds || 0));
-    const cur = p.value;
+    const cur = this.duckValueAt(now);
+    this.duckEnv = { t0: now, v0: cur, depth: this.duckDepth, until: this.duckUntil };
     p.cancelScheduledValues(now);
     p.setValueAtTime(cur, now);
     p.linearRampToValueAtTime(this.duckDepth, now + 0.04);

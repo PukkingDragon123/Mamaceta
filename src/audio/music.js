@@ -52,17 +52,16 @@ export function parseKey(k) {
   return (SCALES[mode] || SCALES.major).map((i) => (root + i) % 12);
 }
 
-/** Move a note by `steps` scale degrees (diatonic harmony). Chromatic notes fall back to a 3rd. */
+/** Move a note by `steps` scale degrees (diatonic harmony). Chromatic notes fall back to a minor 3rd. */
 export function diatonic(m, scale, steps) {
-  const pc = ((m % 12) + 12) % 12;
-  const idx = scale.indexOf(pc);
-  if (idx < 0) return m + (steps < 0 ? -3 : 3) * Math.sign(Math.abs(steps));
-  const n = scale.length;
+  const root = scale[0];
+  const offs = scale.map((pc) => (((pc - root) % 12) + 12) % 12); // ascending semitones above the key root
+  const idx = offs.indexOf((((m % 12) - root) % 12 + 12) % 12);
+  if (idx < 0) return m + (steps < 0 ? -3 : 3);
+  const n = offs.length;
   const tgt = idx + steps;
   const oct = Math.floor(tgt / n);
-  const pc2 = scale[((tgt % n) + n) % n];
-  let d = pc2 - pc + oct * 12;
-  return m + d;
+  return m + offs[((tgt % n) + n) % n] - offs[idx] + 12 * oct;
 }
 
 /** All chord tones within [lo, hi]. */
@@ -133,6 +132,17 @@ class Builder {
     const i = this.spans.indexOf(this.spanAt(step));
     return this.spans[(i + 1) % this.spans.length].ch;
   }
+  /** Diatonic harmony that never clashes with the chord underneath (falls back to a chord tone). */
+  harmNote(m, step, steps) {
+    const ch = this.chordAt(step);
+    const isCT = (x) => ch.pcs.includes(((x % 12) + 12) % 12);
+    let h = diatonic(m, this.scale, steps);
+    if (isCT(m) && !isCT(h)) {
+      const dir = steps < 0 ? -1 : 1;
+      for (let x = m + 3 * dir; Math.abs(x - m) < 10; x += dir) if (isCT(x)) { h = x; break; }
+    }
+    return h;
+  }
   barList(o) { if (o.bars) return o.bars; const a = []; for (let i = 0; i < this.bars; i++) a.push(i); return a; }
   push(ev) { this.events.push(ev); return ev; }
 
@@ -154,11 +164,12 @@ class Builder {
       const notes = midis.map((m) => m + tr);
       const ev = this.push(notes.length > 1 ? { ch, step, len, vel, midis: notes } : { ch, step, len, vel, midi: notes[0] });
       if (o.harm) {
-        const hm = notes.map((m) => diatonic(m, this.scale, o.harm));
+        const hm = notes.map((m) => this.harmNote(m, step, o.harm));
         ev.h = this.push(hm.length > 1 ? { ch: o.harmCh || ch, step, len, vel: vel * (o.harmVel ?? 0.8), midis: hm } : { ch: o.harmCh || ch, step, len, vel: vel * (o.harmVel ?? 0.8), midi: hm[0] });
       }
       if (o.trem && len >= o.trem && !ev.midis) { // marimba-style tremolo roll on long notes
-        for (let k = 1; k < len * 2 - 1; k++) this.push({ ch, step: step + (k >> 1), dt: (k & 1) * 0.5, len: 1, vel: vel * (0.4 + 0.12 * (k & 1)), midi: ev.midi });
+        for (let k = 1; k < len * 2 - 1; k++) this.push({ ch, step: step + (k >> 1), dt: (k & 1) * 0.5, len: 1, vel: vel * (0.4 + 0.12 * (k & 1)), midi: ev.midi, roll: 1 });
+        ev.roll = 1;
       }
       last = ev;
       step += len;

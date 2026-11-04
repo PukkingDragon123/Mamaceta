@@ -180,7 +180,7 @@ export class HUD {
     ui.text(lbl, right ? mx + mw : mx, my - 11, { font: full ? 'labelB' : 'label', color: full ? (Math.floor(this.t * 6) % 2 ? P.teal5 : P.white) : P.blue4, align: right ? 'right' : 'left' });
     if (full && this.mode !== 'online-remote') {
       const keys = ctx.keyHints?.[i];
-      if (keys) ui.text(keys, right ? mx : mx + mw, my - 11, { font: 'label', color: P.cream2, align: right ? 'left' : 'right' });
+      if (keys) ui.text(keys, right ? mx - 6 : mx + mw + 6, my - 1, { font: 'label', color: P.cream2, align: right ? 'right' : 'left' });
     }
   }
 

@@ -104,7 +104,7 @@ export function planUtterance(who, text, opts = {}) {
   endSentence('.');
   if (syl.length > 360) syl.length = 360;
   const last = syl[syl.length - 1];
-  const total = Math.max(t, last ? last.t + last.dur : 0);
+  const total = last ? last.t + last.dur : 0; // speech ends with the last syllable (trailing pauses excluded)
   return { P, syl, total };
 }
 

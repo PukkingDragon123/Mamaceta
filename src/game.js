@@ -97,7 +97,7 @@ export class Game {
       } catch (e) { this.crash(e); }
       this.renderer.update(dt);
       if (scr.scene && scr.camera) {
-        try { this.renderer.render(scr.scene, scr.camera); } catch (e) { this.crash(e); }
+        try { this.renderer.render(scr.scene, scr.camera); scr.postRender?.(this.renderer); } catch (e) { this.crash(e); }
       }
       this.ui.begin(dt);
       try { scr.drawUI?.(this.ui, dt); } catch (e) { this.crash(e); }

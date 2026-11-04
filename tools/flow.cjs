@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
   const logs = [];
   p.on('console', (m) => { if (m.type() === 'error') logs.push('error: ' + m.text()); });
   p.on('pageerror', (e) => logs.push('PAGEERROR: ' + e.message));
-  await p.goto('http://localhost:5173/' + q);
+  await p.goto('http://localhost:' + (process.env.PORT || '5173') + '/' + q);
   await p.waitForFunction(() => window.__booted || window.__bootError, null, { timeout: 90000 });
   for (const s of steps) {
     if (s.startsWith('wait:')) await p.waitForTimeout(+s.slice(5));

@@ -15,9 +15,13 @@ export async function createFirstScreen(game, params, progress) {
         { char: params.get('p2') || 'brutus', cos: { skin: params.get('s2') || 'default' }, name: 'CPU', cpu: mode === 'local' || mode === 'training' ? null : +(params.get('cpu') || 2) },
       ],
       stage: params.get('stage') || 'rustpit', rounds: 3, skipIntro: params.get('intro') !== '1',
-      onEnd: () => location.reload(), onQuit: () => location.reload(),
+      onQuit: () => location.reload(),
     };
-    return new MatchScreen(cfg);
+    const { ResultsScreen } = await import('./results.js');
+    const { ensureLocker, lockerFighters } = await import('./flow.js');
+    ensureLocker(game); lockerFighters(game);
+    const match = new MatchScreen({ ...cfg, onEnd: (res) => { match.keepAlive = true; game.setScreen(new ResultsScreen(match, res, cfg), { instant: true }); } });
+    return match;
   }
   if (which === 'models') {
     const { DevModels } = await import('./devmodels.js');

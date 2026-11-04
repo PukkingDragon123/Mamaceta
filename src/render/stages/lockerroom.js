@@ -237,17 +237,17 @@ export class LockerRoom {
     const S = this.scene, x0 = this.moltX;
     const r = seeded(8);
     // room shell
-    const room = new VoxelGrid(64, 40, 48);
-    room.box(0, 0, 0, 64, 2, 48, (x, y, z) => ((Math.floor(x / 4) + Math.floor(z / 4)) % 2 ? 0x4a1a2a : 0x2a0a1a)); // checker carpet
-    room.box(0, 0, 0, 2, 40, 48, (x, y, z) => (y % 6 === 0 ? 0x2a0a1a : 0x5a1a3a)); // left wall (velvet)
-    room.box(62, 0, 0, 64, 40, 48, (x, y, z) => (y % 6 === 0 ? 0x2a0a1a : 0x5a1a3a));
+    const room = new VoxelGrid(64, 40, 80);
+    room.box(0, 0, 0, 64, 2, 80, (x, y, z) => ((Math.floor(x / 4) + Math.floor(z / 4)) % 2 ? 0x4a1a2a : 0x2a0a1a)); // checker carpet
+    room.box(0, 0, 0, 2, 40, 80, (x, y, z) => (y % 6 === 0 ? 0x2a0a1a : 0x5a1a3a)); // left wall (velvet)
+    room.box(62, 0, 0, 64, 40, 80, (x, y, z) => (y % 6 === 0 ? 0x2a0a1a : 0x5a1a3a));
     room.box(0, 0, 0, 64, 40, 2, (x, y, z) => (x % 8 === 0 ? 0x2a0a1a : 0x6a2a4a)); // back wall
-    room.box(0, 38, 0, 64, 40, 48, 0x1a0a12);
-    S.add(mesh(room, VS_SM * 1.6, [32, 0, 48], [x0, 0, -6.7], { cast: false }));
+    room.box(0, 38, 0, 64, 40, 80, 0x1a0a12);
+    S.add(mesh(room, VS_SM * 1.6, [32, 0, 80], [x0, 0, -6.7], { cast: false }));
     // shelves with treasures
     for (let row = 0; row < 3; row++) {
       const sh = new VoxelGrid(80, 2, 8); sh.box(0, 0, 0, 80, 2, 8, 0xb88a1e);
-      S.add(mesh(sh, VS_SM, [40, 2, 4], [x0, 1.4 + row * 0.85, -13.7]));
+      S.add(mesh(sh, VS_SM, [40, 2, 4], [x0, 1.4 + row * 0.85, -14.2]));
       for (let k = 0; k < 9; k++) {
         const kind = (k + row * 2) % 5;
         const g = new VoxelGrid(6, 7, 6);
@@ -256,21 +256,21 @@ export class LockerRoom {
         else if (kind === 2) g.sphere(3, 3, 3, 2.4, { c: 0xfff8f0, e: 60 }); // pearl
         else if (kind === 3) g.box(0, 0, 1, 6, 4, 5, (x, y) => (y === 3 ? 0xf0c33c : 0x6a2a1a)); // chest
         else g.ellipsoid(3, 3, 3, 2.8, 2.2, 2.5, (x, y, z) => (vhash(x, y, z, 2) < 0.5 ? 0xffffff : 0xd8c8a0)); // skull-ish
-        S.add(mesh(g, VS_XS * 1.4, [3, 0, 3], [x0 - 2.1 + k * 0.52 + r() * 0.1, 1.48 + row * 0.85, -13.6]));
+        S.add(mesh(g, VS_XS * 1.4, [3, 0, 3], [x0 - 2.1 + k * 0.52 + r() * 0.1, 1.48 + row * 0.85, -14.1]));
       }
     }
     // counter with cash register
     const cg = new VoxelGrid(56, 18, 14);
     cg.box(0, 0, 0, 56, 16, 12, (x, y, z) => (y > 13 ? 0xd8a83a : ((x + y) % 8 === 0 ? 0x6a2a4a : 0x4a1a2a)));
     cg.box(0, 16, 0, 56, 18, 14, 0xb88a1e);
-    S.add(mesh(cg, VS_SM, [28, 0, 7], [x0, 0, -11.2]));
+    S.add(mesh(cg, VS_SM, [28, 0, 7], [x0 - 0.4, 0, -12.2]));
     const reg = new VoxelGrid(12, 12, 9);
     reg.box(0, 0, 0, 12, 8, 9, 0xb88a1e); reg.box(1, 8, 2, 11, 12, 7, 0xd8a83a); reg.box(2, 9, 6, 10, 11, 7.5, { c: 0x6aff8a, e: 200 });
     for (let i = 0; i < 4; i++) reg.box(2 + i * 2.2, 8, 0, 3 + i * 2.2, 9, 2, 0xf5e6c4);
-    this.register = mesh(reg, VS_SM, [6, 0, 4.5], [x0 + 1.1, 1.12, -11.2]);
+    this.register = mesh(reg, VS_SM, [6, 0, 4.5], [x0 - 1.6, 1.12, -12.2]);
     S.add(this.register);
     // snail shell hoard piles
-    for (const [px, pz, n] of [[x0 - 2.7, -12.6, 30], [x0 + 2.8, -12.9, 26]]) {
+    for (const [px, pz, n] of [[x0 - 2.6, -13.4, 30], [x0 + 2.6, -13.6, 26]]) {
       const pg = new VoxelGrid(26, 14, 22);
       for (let i = 0; i < n; i++) { const cx = 4 + r() * 18, cz = 4 + r() * 14; const cy = Math.max(1, 10 - Math.hypot(cx - 13, cz - 11) * 0.9 + r() * 2); pg.ellipsoid(cx, cy, cz, 2, 1.6, 2, (x, y) => ((x + y) % 2 ? { c: 0xf0c33c, e: 50 } : 0xb88a1e)); }
       S.add(mesh(pg, VS_SM, [13, 0, 11], [px, 0, pz]));
@@ -280,17 +280,17 @@ export class LockerRoom {
     const word = "MOLT'S";
     const ng = new VoxelGrid(word.length * 12 + 2, 22, 2);
     [...word].forEach((ch, i) => (L[ch] || L.O).forEach((row, j) => { for (let k = 0; k < 5; k++) if (row[k] === 'X') ng.box(1 + i * 12 + k * 2, 20 - j * 4 - 3, 0, 1 + i * 12 + k * 2 + 2, 20 - j * 4, 2, { c: 0xff4fa0, e: 255 }); }));
-    S.add(mesh(ng, VS_SM, [ng.sx / 2, 0, 1], [x0, 4.4, -13.8], { cast: false }));
-    const shopLight = new THREE.PointLight(0xff6ab0, 14, 10, 1.6); shopLight.position.set(x0, 4.2, -12); S.add(shopLight);
-    const shopLight2 = new THREE.PointLight(0xffc070, 16, 10, 1.6); shopLight2.position.set(x0 + 1.5, 2.8, -9); S.add(shopLight2);
+    S.add(mesh(ng, VS_SM, [ng.sx / 2, 0, 1], [x0, 4.3, -14.3], { cast: false }));
+    const shopLight = new THREE.PointLight(0xff6ab0, 14, 10, 1.6); shopLight.position.set(x0, 4.0, -12.5); S.add(shopLight);
+    const shopLight2 = new THREE.PointLight(0xffc070, 16, 10, 1.6); shopLight2.position.set(x0 + 0.5, 2.8, -10); S.add(shopLight2);
     this.shopLights = [shopLight, shopLight2];
     // display pedestal for previews
     const ped = new VoxelGrid(20, 8, 20);
     ped.cylinder('y', 10, 10, 0, 8, 9.5, (x, y) => (y === 7 ? 0xf0c33c : y === 0 ? 0x6b4a12 : 0x4a1a2a));
-    this.pedestal = mesh(ped, VS_SM, [10, 0, 10], [x0 + 2.4, 0, -9.0]);
+    this.pedestal = mesh(ped, VS_SM, [10, 0, 10], [x0 + 1.55, 0, -11.5]);
     S.add(this.pedestal);
-    this.pedestalTop = new THREE.Vector3(x0 + 2.4, 0.5, -9.0);
-    const spot = new THREE.SpotLight(0xfff0d0, 30, 8, 0.45, 0.5, 1.2); spot.position.set(x0 + 2.4, 4.5, -7.5); spot.target.position.copy(this.pedestalTop); S.add(spot, spot.target);
+    this.pedestalTop = new THREE.Vector3(x0 + 1.55, 0.5, -11.5);
+    const spot = new THREE.SpotLight(0xfff0d0, 30, 8, 0.45, 0.5, 1.2); spot.position.set(x0 + 1.55, 4.5, -9.6); spot.target.position.copy(this.pedestalTop); S.add(spot, spot.target);
   }
 
   setCam(pos, look, fov = 40, speed = 2.2) { this.camTarget = { pos: new THREE.Vector3(...pos), look: new THREE.Vector3(...look), fov, speed }; }

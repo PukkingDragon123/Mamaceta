@@ -2,6 +2,14 @@
 import { LockerRoom } from '../render/stages/lockerroom.js';
 import { MenuFighter } from '../render/menuFighter.js';
 import { Save, CHARS } from '../core/save.js';
+import { TitleScreen, MainMenuScreen } from './menu.js';
+import { CharSelectScreen } from './select.js';
+import { MapVoteScreen } from './mapvote.js';
+import { ShopScreen } from './shop.js';
+import { SettingsScreen } from './settings.js';
+import { OnlineScreen } from './online.js';
+import { MatchScreen } from './match.js';
+import { ResultsScreen } from './results.js';
 
 export function ensureLocker(game) {
   if (!game.locker) game.locker = new LockerRoom(game.renderer);
@@ -41,40 +49,31 @@ export function rebuildFighter(game, c, cos) {
 export async function createMainFlow(game, params) {
   ensureLocker(game);
   lockerFighters(game);
-  const { TitleScreen } = await import('./menu.js');
-  if (params.get('skiptitle')) { const { MainMenuScreen } = await import('./menu.js'); return new MainMenuScreen(); }
+  if (params.get('skiptitle')) return new MainMenuScreen();
   return new TitleScreen();
 }
 
 export async function goMainMenu(game, o = {}) {
-  const { MainMenuScreen } = await import('./menu.js');
   game.setScreen(new MainMenuScreen(o), { kind: o.kind || 'bubbles' });
 }
 export async function goCharSelect(game, mode, o = {}) {
-  const { CharSelectScreen } = await import('./select.js');
   game.setScreen(new CharSelectScreen(mode, o), { kind: o.kind || 'bubbles' });
 }
 export async function goMapVote(game, cfg) {
-  const { MapVoteScreen } = await import('./mapvote.js');
   game.setScreen(new MapVoteScreen(cfg), { kind: 'fade', dur: 0.5 });
 }
 export async function goShop(game) {
-  const { ShopScreen } = await import('./shop.js');
   game.setScreen(new ShopScreen(), { kind: 'fade', dur: 0.4 });
 }
 export async function goSettings(game, back) {
-  const { SettingsScreen } = await import('./settings.js');
   game.setScreen(new SettingsScreen(back), { kind: 'fade', dur: 0.3 });
 }
 export async function goOnline(game) {
-  const { OnlineScreen } = await import('./online.js');
   game.setScreen(new OnlineScreen(), { kind: 'bubbles' });
 }
 
 // Start a match. cfg: { mode, players:[{char,cos,name,cpu}], stage, net, localIndex }
 export async function startMatch(game, cfg) {
-  const { MatchScreen } = await import('./match.js');
-  const { ResultsScreen } = await import('./results.js');
   const full = {
     rounds: Save.settings.rounds || 3, roundTime: Save.settings.roundTime || 99, qte: Save.settings.qte !== false,
     ...cfg,

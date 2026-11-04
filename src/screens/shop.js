@@ -147,8 +147,8 @@ export class ShopScreen {
         if (this.pt > 1.0) this.L.setCam([this.L.moltX, 1.75, -5.2], [this.L.moltX, 1.6, -9], 46, 1.6);
         if (this.pt > 2.0) {
           this.phase = 'shop'; this.pt = 0;
-          M.group.position.set(this.L.moltX - 0.7, 0, -12.1); M.group.rotation.y = -Math.PI / 2; M.mood('wave', 1.5);
-          this.L.setCam([this.L.moltX + 0.6, 1.75, -7.4], [this.L.moltX + 0.1, 1.15, -11.6], 48, 1.4);
+          M.group.position.set(this.L.moltX - 0.35, 0.42, -12.95); M.group.rotation.y = -Math.PI / 2; M.mood('wave', 1.5);
+          this.L.setCam([this.L.moltX - 0.9, 1.95, -6.9], [this.L.moltX - 0.2, 1.35, -12.4], 46, 1.4);
           this.say('browse');
         }
         break;
@@ -244,52 +244,62 @@ export class ShopScreen {
     ui.text(this.tab === 0 ? "TODAY'S DEALS" : 'WARDROBE', 94, 8, { font: 'labelB', align: 'center', color: P.cream4 });
     ui.text(`NEW STOCK IN ${formatTime(secondsUntilMidnight())}`, 186, 10, { font: 'label', color: P.pink4 });
     if (this.tab === 0) this.drawDeals(ui); else this.drawWardrobe(ui);
-    if (this.dlg) dialogueBox(ui, 10, ui.h - 50, Math.min(300, ui.w * 0.55), 36, 'MADAM MOLT', this.dlg.text, Math.floor(this.dlg.t * 40), { nameTone: 'pink', prompt: false });
+    if (this.dlg && this.dlg.t < 5) {
+      const hp = this.L.molt.group.position.clone(); hp.y += 2.0;
+      hp.project(this.camera);
+      const px = Math.round((hp.x * 0.5 + 0.5) * ui.w), py = Math.round((1 - (hp.y * 0.5 + 0.5)) * ui.h);
+      const txt = this.dlg.text.slice(0, Math.floor(this.dlg.t * 40));
+      const lines = ui.wrap(txt, 140, 'body');
+      const w = Math.max(20, ...lines.map((l) => ui.measure(l, 'body'))) + 12, h = lines.length * 9 + 16;
+      const bx = clamp(px - w / 2, 196, ui.w - w - 4), by = clamp(py - h - 4, 34, ui.h);
+      ui.rect(bx - 1, by - 1, w + 2, h + 2, P.ink); ui.rect(bx, by, w, h, P.cream3);
+      ui.rect(clamp(px - 2, bx + 4, bx + w - 8), by + h, 4, 4, P.cream3);
+      ui.text('MADAM MOLT', bx + 5, by + 3, { font: 'label', color: P.pink2, outline: null });
+      lines.forEach((l, i) => ui.text(l, bx + 6, by + 12 + i * 9, { font: 'body', color: P.ink, outline: null }));
+    }
     hintBar(ui, [[['Q', 'E'], this.tab === 0 ? 'WARDROBE' : 'SHOP'], [['OK'], this.tab === 0 ? 'BUY' : 'EQUIP'], [['ESC'], 'LEAVE']], { x: ui.w - 230, y: ui.h - 12 });
   }
 
   drawDeals(ui) {
+    const t = this.t;
     const n = this.items.length;
-    const cw = 66, ch = 92;
-    const x0 = 10, y0 = 32;
+    const cw = 58, ch = 84, gap = 5;
+    const x0 = 8, y0 = ui.h - ch - 22;
     this.items.forEach((it, i) => {
-      const col = i % 3, row = Math.floor(i / 3);
       const sel = i === this.sel;
-      const x = x0 + col * (cw + 6), y = y0 + row * (ch + 8) + (sel ? -3 : 0);
+      const x = x0 + i * (cw + gap), y = y0 + (sel ? -4 : 0);
       const R = RARITY[it.rarity];
       const owned = Save.owns(it.id);
-      // string
       ui.rect(x + cw / 2, y - 6, 1, 8, P.cream1);
-      ui.img(paperTag(cw, ch, { seed: i + 3, color: it.rarity === 'legendary' ? 'cream' : 'cream' }), x, y);
+      ui.img(paperTag(cw, ch, { seed: i + 3 }), x, y);
       ui.rect(x + 3, y + 3, cw - 6, 2, R.color);
       ui.text(SLOT_NAMES[it.slot], x + cw / 2, y + 8, { font: 'label', align: 'center', color: P.ink, outline: null });
-      this.itemIcon(ui, it, x + cw / 2 - 20, y + 18, 40);
-      ui.para(it.name, x + 4, y + 60, cw - 8, { font: 'body', color: P.ink, outline: null, align: 'center' });
-      ui.icon('snail', x + 6, y + ch - 15);
-      ui.text(owned ? 'OWNED' : String(it.price), x + cw - 6, y + ch - 12, { font: 'labelB', align: 'right', color: owned ? P.green3 : Save.data.snails >= it.price ? P.ink : P.red3, outline: null });
-      if (owned) ui.text('SOLD', x + cw / 2, y + 30, { font: 'big', align: 'center', color: P.red3, alpha: 0.85 });
-      if (sel) { ui.frame(x - 2, y - 2, cw + 4, ch + 4, Math.floor(t * 6) % 2 ? P.gold3 : P.gold4); }
+      this.itemIcon(ui, it, x + cw / 2 - 18, y + 18, 36);
+      ui.para(it.name, x + 3, y + 56, cw - 6, { font: 'body', color: P.ink, outline: null, align: 'center' });
+      ui.icon('snail', x + 4, y + ch - 14);
+      ui.text(owned ? 'OWNED' : String(it.price), x + cw - 5, y + ch - 11, { font: 'labelB', align: 'right', color: owned ? P.green3 : Save.data.snails >= it.price ? P.ink : P.red3, outline: null });
+      if (owned) ui.text('SOLD', x + cw / 2, y + 26, { font: 'big', align: 'center', color: P.red3, alpha: 0.85 });
+      if (sel) ui.frame(x - 2, y - 2, cw + 4, ch + 4, Math.floor(t * 6) % 2 ? P.gold3 : P.gold4);
       if (ui.hover(x, y, cw, ch) && ui.mouse.moved && this.sel !== i) { this.sel = i; Sound.sfx('ui_paper'); }
       if (ui.clicked(x, y, cw, ch)) { if (this.sel === i) this.buy(); else this.sel = i; }
     });
-    // detail panel
+    // detail panel (top left)
     const it = this.items[this.sel];
     if (!it) return;
-    const dx = x0 + 3 * (cw + 6) + 6, dy = 32, dw = Math.min(170, ui.w - dx - 12), dh = 100;
-    if (dw < 90) return;
+    const dx = 8, dy = 32, dw = 176, dh = 96;
     ui.panel(dx, dy, dw, dh, { seed: 222, tone: 'dark', plankSize: 20, barnacles: 2 });
     const R = RARITY[it.rarity];
     ui.text(R.name, dx + 8, dy + 6, { font: 'label', color: R.color });
+    if (it.slot === 'skin') ui.text('FOR ' + CDATA[it.char].name, dx + dw - 8, dy + 6, { font: 'label', align: 'right', color: P.gold3 });
     ui.para(it.name, dx + 8, dy + 16, dw - 16, { font: 'labelB', color: P.cream4 });
     ui.para(it.desc, dx + 8, dy + 34, dw - 16, { font: 'body', color: P.cream2 });
-    if (it.slot === 'skin') ui.text('FOR ' + CDATA[it.char].name, dx + 8, dy + dh - 24, { font: 'label', color: P.gold3 });
     const owned = Save.owns(it.id);
-    const r = ui.plank(dx + 8, dy + dh - 16, dw - 16, 13, owned ? 'OWNED' : `BUY  ${it.price}`, { seed: 230, selected: !owned, noPointer: true, font: 'label', disabled: owned });
+    const r = ui.plank(dx + 8, dy + dh - 18, dw - 16, 14, owned ? 'OWNED' : `BUY FOR ${it.price}`, { seed: 230, selected: !owned, noPointer: true, font: 'label', disabled: owned });
     if (r.clicked) this.buy();
   }
 
   drawWardrobe(ui) {
-    const x = 10, y = 32, w = 210, h = 156;
+    const x = 8, y = 32, w = 184, h = Math.min(170, ui.h - 56);
     ui.panel(x, y, w, h, { seed: 241, tone: 'dark', plankSize: 18, barnacles: 2 });
     ui.text('< ' + CDATA[this.wChar].name + ' >', x + w / 2, y + 5, { font: 'labelB', align: 'center', color: P.gold4 });
     ui.text('Z / C: CHARACTER', x + w / 2, y + 15, { font: 'label', align: 'center', color: P.cream1 });

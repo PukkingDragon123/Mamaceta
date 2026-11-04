@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "peer-server": "peerjs --port 9000 --path /mm"
+    "peer-server": "node tools/peer-server.mjs 9000"
   },
   "license": "MIT",
   "dependencies": {

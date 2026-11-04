@@ -359,12 +359,12 @@ const BOBBY_SHAPE = {
 };
 function coneAcc(S, o = {}) {
   const [W, H] = S.head;
-  const h = o.h ?? 16, base = o.base ?? 13;
+  const h = o.h ?? 16, base = o.base ?? 11;
   return { name: 'cone', attach: 'head', pos: V([W * 0.35, H * 0.82, 0]), rot: [0.15, 0, -0.32], spring: [90, 5], springGain: 1.8, def: acc(base + 2, h + 2, base + 2, [(base + 2) / 2, 0, (base + 2) / 2], (g) => {
     const c = (base + 2) / 2;
     // square base
-    if (o.squareBase !== false) g.box(1, 0, 1, base + 1, 2, base + 1, (x, y) => (y === 0 ? shadeColor(o.baseColor ?? 0x2a2f36, -0.2) : o.baseColor ?? 0x2a2f36));
-    g.cylinder('y', c, c, 2, h, base * 0.36, (x, y, z) => {
+    if (o.squareBase !== false) g.box(2, 0, 2, base, 2, base, (x, y) => (y === 0 ? shadeColor(o.baseColor ?? 0x3a3236, -0.2) : o.baseColor ?? 0x3a3236));
+    g.cylinder('y', c, c, 2, h, base * 0.4, (x, y, z) => {
       if (o.paint) return o.paint(x, y, z);
       const band = (y >= 6 && y <= 7) || (y >= 11 && y <= 12);
       return band ? { c: 0xf5f8ff, e: 40 } : (vhash(x, y, z, 4) < 0.08 ? 0xff6a1a : 0xff7a1a);

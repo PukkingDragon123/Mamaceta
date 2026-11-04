@@ -16,13 +16,15 @@ import { Sound } from '../core/sound.js';
 import { keyLabel } from '../core/input.js';
 import { ease, clamp } from '../core/math.js';
 import { LINES, line } from '../data/dialogue.js';
+import { CantinaView } from '../render/stages/cantina.js';
+import { RustPitView } from '../render/stages/rustpit.js';
+import { MangaPanels } from '../render/panels.js';
 
 const STEP = 1 / 60;
 const _v = new THREE.Vector3();
 
 async function stageView(id, scene, renderer, particles, fx, sim) {
-  if (id === 'cantina') { const { CantinaView } = await import('../render/stages/cantina.js'); return new CantinaView(scene, renderer, particles, fx, sim); }
-  const { RustPitView } = await import('../render/stages/rustpit.js');
+  if (id === 'cantina') return new CantinaView(scene, renderer, particles, fx, sim);
   return new RustPitView(scene, renderer, particles, fx, sim);
 }
 
@@ -65,6 +67,7 @@ export class MatchScreen {
     g.input.clearLatched();
     this.landed = [false, false]; this.jumped = [false, false];
     this.slowmo = 1;
+    this.panels = new MangaPanels();
     this.darkCur = 0;
     this.cine = null;
     this.trainingOpts = { dummy: 'stand', showInputs: true, showHit: true, infiniteMeter: false, page: 0 };
@@ -134,11 +137,12 @@ export class MatchScreen {
     if (active && cfg.mode !== 'online' && g.input.startPressed() && !this.sim.s.done) { this.paused = !this.paused; Sound.sfx(this.paused ? 'ui_select' : 'ui_back'); Sound.muffle(this.paused); }
     if (this.paused) { this.updatePause(); this.renderViews(0, 1); return; }
     if (cfg.mode === 'training' && active) this.trainingKeys();
-    // fixed-step simulation
-    const slowS = this.sim.s.slow > 0;
-    this.acc += dt;
+    // fixed-step simulation (?simspeed=N speeds things up for automated tests)
+    const speed = this.simSpeed ?? (this.simSpeed = +(new URLSearchParams(location.search).get('simspeed') || 1));
+    this.acc += dt * (cfg.mode === 'online' ? 1 : speed);
     let steps = 0;
-    while (this.acc >= STEP && steps < 5) {
+    const maxSteps = 5 * Math.max(1, speed);
+    while (this.acc >= STEP && steps < maxSteps) {
       if (cfg.mode === 'online') {
         const ok = this.netStep();
         if (!ok) { this.acc = Math.min(this.acc, STEP); break; }
@@ -147,7 +151,7 @@ export class MatchScreen {
       }
       this.acc -= STEP; steps++;
     }
-    if (steps >= 5) this.acc = 0;
+    if (steps >= maxSteps) this.acc = 0;
     const alpha = clamp(this.acc / STEP, 0, 1);
     this.renderViews(dt, alpha);
     if (this.sim.s.done) this.finish();
@@ -420,7 +424,7 @@ export class MatchScreen {
         Sound.stinger('stinger_demon'); Sound.sfx('demon_transform'); Sound.music(null, { fade: 0.3 });
         this.cine = { kind: 'demon', t: 0, i: e.i };
         const D = V[e.i];
-        d.setShot({ type: 'focus', target: () => D.headPos(new THREE.Vector3()), offset: [s.fighters[e.i].face * 1.6, 0.0, 2.6], offset2: [s.fighters[e.i].face * 0.9, -0.15, 1.6], fov: 30, dur: 2.6, speed: 5 });
+        d.setShot({ type: 'focus', target: () => D.headPos(new THREE.Vector3()), offset: [s.fighters[e.i].face * 1.1, 0.45, 1.7], offset2: [s.fighters[e.i].face * 0.7, 0.2, 1.1], fov: 32, dur: 2.6, speed: 5 });
         fx.shards(e.x, e.y + 1.4, 20, [0xff8a2a, 0xffffff, 0xff7a1a], { spr: 'shard', s1: 0.16 });
         Sound.sfx('cone_crack');
         this.say(e.i, 'demon');
@@ -443,6 +447,26 @@ export class MatchScreen {
       default: break;
     }
   }
+
+  updatePanels() {
+    const c = this.cine, s = this.sim.s;
+    if (c && c.kind === 'qte' && c.t > 0.25) {
+      const A = this.views[c.a], D = this.views[c.d];
+      const fa = s.fighters[c.a], fd = s.fighters[c.d];
+      const left = c.a === 0 ? 0 : 1;
+      const tg = [
+        { pos: A.headPos(new THREE.Vector3()), face: fa.face, shake: 1, fov: 32, dist: 0.7, side: 1.45, up: 0.25 },
+        { pos: D.headPos(new THREE.Vector3()), face: fd.face, shake: 1, fov: 32, dist: 0.7, side: 1.45, up: 0.25 },
+      ];
+      const rects = [[0.05, 0.29, 0.4, 0.3], [0.55, 0.29, 0.4, 0.3]];
+      this.panels.set(left === 0 ? tg : [tg[1], tg[0]], rects);
+    } else if (c && c.kind === 'demon' && c.t > 1.0 && c.t < 2.6) {
+      const D = this.views[c.i];
+      this.panels.set([{ pos: D.headPos(new THREE.Vector3()), face: s.fighters[c.i].face, dist: 0.75, side: 0.75, fov: 22, shake: 0.6, bg: 0x000000 }], [[0.3, 0.12, 0.4, 0.3]]);
+    } else this.panels.clear();
+  }
+
+  postRender(renderer) { if (this.panels?.active) this.panels.render(renderer, this.scene, this.time); }
 
   finisherShot(e) {
     const d = this.director, V = this.views, s = this.sim.s;
@@ -511,8 +535,9 @@ export class MatchScreen {
     this.stage.update(vdt, this.sim);
     this.particles.update(dt);
     this.fx.update(vdt);
-    // cinematics timer
+    // cinematics timer + manga close-up panels
     if (this.cine) { this.cine.t += dt; }
+    this.updatePanels();
     if (this.introT !== undefined) { this.introT += dt; if ((s.phase !== 'intro' && this.introT > 0.5) || this.introT > 4.4) { this.introT = undefined; if (!this.cine) this.director.setShot(null); } }
     if (this.ultShot !== undefined && this.ultShot > 0) { this.ultShot -= dt; if (this.ultShot <= 0 && !this.cine) this.director.setShot(null); }
     if (this.fireworks > 0) { this.fireworks -= dt; if (Math.random() < dt * 5) { const x = (Math.random() - 0.5) * 10, y = 4 + Math.random() * 3; this.fx.burst(x, y, { n: 40, spr: 'spark', colors: [0xff4f6a, 0x4fd0ff, 0xffcf3a, 0x6aff8a], glow: true, sp0: 3, sp1: 6, grav: -2, life1: 1.2 }); Sound.sfx('shockwave', { vol: 0.3, pitch: 1.5 }); } }
@@ -607,6 +632,7 @@ export class MatchScreen {
       const p = proj(hp.x, hp.y + 0.55);
       if (p) this.drawSpeech(ui, p.x, p.y, this.speech);
     }
+    if (this.panels?.active) this.panels.drawUI(ui, this.time, this.cine?.kind === 'qte' ? (this.cine.a === 0 ? [PLAYER_COLORS[0].main, PLAYER_COLORS[1].main] : [PLAYER_COLORS[0].main, PLAYER_COLORS[1].main]) : ['#ff1a3a']);
     if (s.phase === 'intro') this.drawIntro(ui);
     if (this.cine?.kind === 'demon') {
       const t = this.cine.t;
