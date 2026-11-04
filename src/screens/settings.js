@@ -100,7 +100,7 @@ export class SettingsScreen {
     const rows = this.rows();
     const listY = y + 50;
     const per = 13;
-    const maxRows = Math.floor((h - 64) / per);
+    const maxRows = Math.floor((h - (TABS[this.tab] === 'CONTROLS' ? 76 : 64)) / per);
     const start = Math.max(0, Math.min(this.row - Math.floor(maxRows / 2), rows.length - maxRows));
     rows.slice(start, start + maxRows).forEach((r, k) => {
       const i = start + k;
@@ -125,6 +125,6 @@ export class SettingsScreen {
       } else if (r.kind === 'name') ui.text(Save.data.name + (this.editing && Math.floor(this.t * 3) % 2 ? '_' : ''), vx, ry, { font: 'labelB', align: 'right', color: P.cream4 });
     });
     hintBar(ui, [[['Q', 'E'], 'TAB'], [['^', 'v'], 'ROW'], [['<', '>'], 'CHANGE'], [['ESC'], 'BACK']], { x: x + 10, y: y + h + 8 });
-    if (TABS[this.tab] === 'CONTROLS') ui.text('Gamepads: X=LIGHT  Y=HEAVY  B/RB=BLOCK  A=JUMP  LB=ULTIMATE', ui.w / 2, ui.h - 10, { font: 'label', align: 'center', color: P.cream2 });
+    if (TABS[this.tab] === 'CONTROLS') ui.text('GAMEPADS: X=LIGHT  Y=HEAVY  B/RB=BLOCK  A=JUMP  LB=ULTIMATE', x + w / 2, y + h - 11, { font: 'label', align: 'center', color: P.gold4 });
   }
 }

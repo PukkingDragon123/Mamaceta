@@ -199,6 +199,7 @@ export class CharSelectScreen {
       this.sentDone = true;
       const picks = this.p.map((p) => ({ char: ORDER[p.cursor], cos: p.cos || Save.equipped(ORDER[p.cursor]) }));
       if (this.net) this.net.send({ t: 'selDone', picks });
+      if (this.mode === 'training') { this.picks = picks; this.finishSelect(); return; }
       this.beginVersus(picks);
     }
   }

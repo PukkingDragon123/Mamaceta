@@ -16,7 +16,7 @@ const { chromium } = require('playwright');
     else if (s.startsWith('shot:')) { await p.screenshot({ path: prefix + '_' + s.slice(5) + '.png' }); console.log('shot', s.slice(5), await p.evaluate(() => (window.__game?.screen?.constructor?.name) + ' err=' + (window.__lastError ? window.__lastError.slice(0, 200) : ''))); }
     else if (s.startsWith('eval:')) console.log('eval', JSON.stringify(await p.evaluate(s.slice(5))));
     else if (s.startsWith('down:')) await p.keyboard.down(s.slice(5));
-    else if (s.startsWith('up:')) await p.keyboard.up(s.slice(5));
+    else if (s.startsWith('up:')) await p.keyboard.up(s.slice(3));
     else { await p.keyboard.press(s); await p.waitForTimeout(150); }
   }
   console.log(logs.slice(0, 15).join('\n'));

@@ -726,7 +726,7 @@ export class MatchScreen {
     ui.dim(0.55);
     const items = this.pauseItems();
     const w = 170, h = 40 + items.length * 20;
-    const x = Math.floor(ui.w / 2 - w / 2), y = Math.floor(ui.h / 2 - h / 2);
+    const x = this.showMoves ? ui.w - w - 10 : Math.floor(ui.w / 2 - w / 2), y = Math.floor(ui.h / 2 - h / 2);
     ui.hangingSign(x, y, w, h, { seed: 9 });
     ui.text('PAUSED', x + w / 2, y + 8, { font: 'big', align: 'center', color: P.gold3 });
     items.forEach((it, i) => {
@@ -741,8 +741,8 @@ export class MatchScreen {
     const ch = p.char;
     const b = this.game.save.settings.bindings.p1;
     const K = (a) => keyLabel(b[a][0]);
-    const w = Math.min(ui.w - 40, 330), h = Math.min(ui.h - 40, 230);
-    const x = Math.floor(ui.w / 2 - w / 2), y = Math.floor(ui.h / 2 - h / 2);
+    const w = Math.min(ui.w - (this.paused ? 200 : 40), 330), h = Math.min(ui.h - 40, 230);
+    const x = this.paused ? 10 : Math.floor(ui.w / 2 - w / 2), y = Math.floor(ui.h / 2 - h / 2);
     ui.panel(x, y, w, h, { seed: 61, tone: 'dark', plankSize: 16, barnacles: 3 });
     ui.text(CHARS[ch].name + ' - MOVE LIST', x + w / 2, y + 6, { font: 'labelB', align: 'center', color: P.gold3 });
     const list = MOVELIST(ch, { L: K('light'), H: K('heavy'), B: K('block'), F: 'FWD', BK: 'BACK', D: K('down'), U: K('up') });
