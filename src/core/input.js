@@ -166,6 +166,7 @@ export class Input {
   // gameplay bits for a player, for one sim tick (consumes latched taps)
   sample(player) {
     let bits = this._keyboardBits(player) | this.latched[player];
+    if (player === 0 && this.touchSource) bits |= this.touchSource();
     this.latched[player] = 0;
     if (this.mode === 'solo') { if (player === 0) bits |= this.gpState[0] | this.gpState[1]; }
     else bits |= this.gpState[player] || 0;

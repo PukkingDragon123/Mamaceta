@@ -7,6 +7,7 @@ import { Save } from './core/save.js';
 import { Sound } from './core/sound.js';
 import { P } from './ui/palette.js';
 import { clamp } from './core/math.js';
+import { TouchControls } from './ui/touch.js';
 
 export class Game {
   constructor() {
@@ -15,6 +16,8 @@ export class Game {
     this.renderer = new Renderer(this.glCanvas);
     this.ui = new UI(this.uiCanvas);
     this.input = new Input();
+    this.touch = new TouchControls(this.ui, this.input);
+    this.input.touchSource = () => this.touch.bits();
     this.save = Save;
     this.screen = null;
     this.next = null;

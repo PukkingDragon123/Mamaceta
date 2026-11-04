@@ -64,6 +64,7 @@ export class MatchScreen {
       mode: cfg.mode,
     });
     g.input.mode = (cfg.mode === 'local') ? 'versus' : 'solo';
+    g.touch.active = true;
     g.input.clearLatched();
     this.landed = [false, false]; this.jumped = [false, false];
     this.slowmo = 1;
@@ -96,6 +97,7 @@ export class MatchScreen {
     Sound.slowmo(1);
     Sound.muffle(false);
     this.game.input.mode = 'solo';
+    this.game.touch.active = false;
   }
 
   introShot() {
@@ -134,7 +136,7 @@ export class MatchScreen {
     if (!this.ready) return;
     const g = this.game, cfg = this.cfg;
     this.time += dt;
-    if (active && cfg.mode !== 'online' && g.input.startPressed() && !this.sim.s.done) { this.paused = !this.paused; Sound.sfx(this.paused ? 'ui_select' : 'ui_back'); Sound.muffle(this.paused); }
+    if (active && cfg.mode !== 'online' && (g.input.startPressed() || g.touch.consumePause()) && !this.sim.s.done) { this.paused = !this.paused; Sound.sfx(this.paused ? 'ui_select' : 'ui_back'); Sound.muffle(this.paused); }
     if (this.paused) { this.updatePause(); this.renderViews(0, 1); return; }
     if (cfg.mode === 'training' && active) this.trainingKeys();
     // fixed-step simulation (?simspeed=N speeds things up for automated tests)
@@ -640,6 +642,7 @@ export class MatchScreen {
     }
     if (this.cfg.mode === 'training') this.drawTraining(ui);
     if (this.cfg.mode === 'online' && this.cfg.net) this.drawNet(ui);
+    if (!this.paused) this.game.touch.draw(ui);
     if (this.showMoves) this.drawMoveList(ui);
     if (this.paused) this.drawPause(ui);
   }

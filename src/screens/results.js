@@ -69,7 +69,7 @@ export class ResultsScreen {
     if (this.net) { this.net.send({ t: 'toSelect' }); goCharSelect(this.game, 'online', { net: this.net }); return; }
     goCharSelect(this.game, this.cfg.mode);
   }
-  exit() { this.match.exit(); }
+  exit() { this.match.exit(); this.game.touch.active = false; }
   update(dt, active) {
     this.t += dt;
     this.match.renderViews(dt, 1);
