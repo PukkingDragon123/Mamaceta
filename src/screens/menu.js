@@ -60,6 +60,7 @@ export class TitleScreen {
     this.t += dt;
     this.L.update(dt);
     for (const c of CHARS) this.F[c].update(dt, { look: this.L.camera.position });
+    if (this.F.jim.punch) { this.L.punchBag(this.F.jim.punch === 2 ? 1.6 : 0.8); this.F.jim.punch = 0; }
     const inp = this.game.input;
     if (active && this.t > 0.6 && (inp.anyPressed || this.game.ui.mouse.clicked)) {
       Sound.resume(); Sound.sfx('ui_select');

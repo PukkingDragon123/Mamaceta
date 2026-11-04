@@ -140,6 +140,8 @@ export class CharSelectScreen {
     this.L.update(dt);
     const look = this.L.camera.position;
     for (const c of CHARS) if (this.F[c].visible) this.F[c].update(dt, { look });
+    const jim = this.F.jim;
+    if (jim.punch) { this.L.punchBag(jim.punch === 2 ? 1.6 : 0.8); Sound.sfx(jim.punch === 2 ? 'hit_medium' : 'hit_light', { vol: 0.35 }); jim.punch = 0; }
     if (this.speech) { this.speech.t += dt; if (this.speech.t > 3) this.speech = null; }
     if (this.phase === 'versus') { this.updateVersus(dt, active); return; }
     // timer

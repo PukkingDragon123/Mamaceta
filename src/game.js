@@ -43,6 +43,8 @@ export class Game {
     this.applySettings();
     this.setScreen(firstScreen, { instant: true });
     const gesture = () => { Sound.resume(); };
+    window.addEventListener('beforeunload', () => this.save.save());
+    document.addEventListener('visibilitychange', () => { if (document.hidden) this.save.save(); });
     window.addEventListener('pointerdown', gesture);
     window.addEventListener('keydown', gesture);
     let last = performance.now();

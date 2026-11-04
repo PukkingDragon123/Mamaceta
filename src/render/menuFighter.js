@@ -9,7 +9,7 @@ import { voxelMaterial } from './materials.js';
 import { ease } from '../core/math.js';
 
 const ACTS = {
-  jim: ['poses', 'read', 'wrap', 'poses'],
+  jim: ['poses', 'bag', 'read', 'bag', 'wrap', 'poses'],
   brutus: ['eat', 'sleep', 'belly', 'eat'],
   bobby: ['balance', 'chase', 'stuck', 'spin'],
   mimi: ['puru', 'selfie', 'ribbons', 'dance'],
@@ -88,6 +88,19 @@ export class MenuFighter {
           p = over(base, { rootRot: s * 1.2, hipDrop: 0.3 + s * 0.2, hF: [0.3, 1.1], hB: [0.0, 1.0], fF: [0.6, 0.6 * s], eyesOpen: 1.3, head: -0.4 });
           if (lk > 0.6) p = lerpPose(p, base, (lk - 0.6) / 0.4);
         } else p = lerpPose(base, over(base, poses[i]), ease.outBack(Math.min(1, lk * 4)));
+        if (this.book) this.book.visible = false;
+        break;
+      }
+      case 'bag': {
+        // practising combos on the punching bag
+        const c = (at % 0.62) / 0.62;
+        const alt = Math.floor(at / 0.62) % 3;
+        const hit = c > 0.35 && c < 0.6;
+        p = over(base, { hipDrop: 0.2, sp2: 0.25, fF: [0.45, 0], fB: [-0.45, 0] });
+        if (alt === 2) { p.hB = hit ? [1.05, 0.55] : [0.1, 0.4]; p.wrB = hit ? -1.6 : 0; p.sp2Yaw = hit ? 0.5 : -0.5; }
+        else { p.hF = hit ? [1.0, 0.68] : [0.45, 0.62]; p.wrF = hit ? -1.4 : -0.3; p.sp2Yaw = hit ? -0.35 : 0.2; }
+        if (hit && !this.bagHit) { this.bagHit = true; this.punch = alt === 2 ? 2 : 1; }
+        if (!hit) this.bagHit = false;
         if (this.book) this.book.visible = false;
         break;
       }

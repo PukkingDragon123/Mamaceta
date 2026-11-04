@@ -94,6 +94,8 @@ export class MatchScreen {
     for (const v of this.views || []) v.dispose();
     this.stage?.dispose();
     this.particles?.dispose();
+    // free GPU memory held by this arena's geometry
+    this.scene?.traverse((o) => { if (o.geometry && !o.geometry.userData?.shared) o.geometry.dispose?.(); });
     Sound.slowmo(1);
     Sound.muffle(false);
     this.game.input.mode = 'solo';

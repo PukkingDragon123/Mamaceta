@@ -28,9 +28,10 @@ export class DevModels {
     const gloves = this.params.get('gloves') || 'default';
     const only = this.params.get('char');
     const ids = only ? [only] : CHAR_IDS;
+    const perChar = (this.params.get('skins') || '').split(',');
     this.rigs = ids.map((id, i) => {
       const demon = this.params.get('demon') && id === 'bobby';
-      const r = new Rig(buildSpec(id, { skin, gloves }, { demon }));
+      const r = new Rig(buildSpec(id, { skin: perChar[i] || skin, gloves }, { demon }));
       r.addTo(this.scene);
       r.root.position.x = (i - (ids.length - 1) / 2) * 2.4;
       r.setFacing(i < ids.length / 2 ? 1 : -1);
@@ -38,7 +39,7 @@ export class DevModels {
       return r;
     });
     if (ids.includes('mimi')) {
-      this.puru = new Puru(this.params.get('puru') || 'default');
+      this.puru = new Puru(this.params.get('puru') || (perChar[3] && perChar[3] !== 'default' ? perChar[3] : 'default'));
       this.puru.addTo(this.scene);
     }
     this.t = 0;
