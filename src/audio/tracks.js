@@ -15,7 +15,7 @@ export const TRACK_DEFS = {
   // ==================================================================== MENU / TITLE
   // Mellow underwater cumbia-bolero, 92 BPM, A minor (Andalusian cadence + i-iv-V7).
   menu: {
-    bpm: 92, key: 'A harmonic', swing16: 0.54, gain: 1,
+    bpm: 92, key: 'A harmonic', swing16: 0.54, gain: 0.71,
     channels: {
       gtr: { inst: 'nylon', gain: 0.5, pan: -0.25, rev: 0.25, lp: 3800 },
       mar: { inst: 'marimba', gain: 0.62, pan: 0.15, rev: 0.32 },
@@ -115,7 +115,7 @@ export const TRACK_DEFS = {
   // ==================================================================== CHARACTER SELECT
   // Energetic mariachi-rock, 132 BPM, D major / B minor. Twin trumpets in thirds.
   select: {
-    bpm: 132, key: 'D major', gain: 1,
+    bpm: 132, key: 'D major', gain: 0.45,
     channels: {
       vih: { inst: 'vihuela', gain: 0.42, pan: -0.32, rev: 0.12 },
       gtr: { inst: 'nylon', gain: 0.34, pan: 0.32, rev: 0.15 },
@@ -196,7 +196,7 @@ export const TRACK_DEFS = {
 
   // ==================================================================== VAULT DOORS (tension)
   doors: {
-    bpm: 96, key: 'D harmonic', gain: 1,
+    bpm: 96, key: 'D harmonic', gain: 0.51,
     channels: {
       tick: { inst: 'drum', gain: 0.4, pan: 0.3, rev: 0.15 },
       drone: { inst: 'pad', gain: 0.42, rev: 0.3, opts: { a: 2.0, r: 2.0, cut: 520, sweep: 0.06 } },
@@ -231,7 +231,7 @@ export const TRACK_DEFS = {
   // ==================================================================== RUST PIT (fight)
   // Industrial latin, 140 BPM, E Phrygian dominant riff. Intensity adds percussion layers.
   rustpit: {
-    bpm: 140, key: 'E phrygdom', gain: 1,
+    bpm: 140, key: 'E phrygdom', gain: 0.39,
     channels: {
       bass: { inst: 'dbass', gain: 0.62 },
       kick: { inst: 'drum', gain: 0.78 },
@@ -332,7 +332,7 @@ export const TRACK_DEFS = {
 
   // ==================================================================== CANTINA (norteño polka)
   cantina: {
-    bpm: 120, key: 'G major', gain: 1,
+    bpm: 120, key: 'G major', gain: 0.3,
     channels: {
       acc: { inst: 'accordion', gain: 0.6, pan: 0.1, rev: 0.16, opts: { low: 0 } },
       acc2: { inst: 'accordion', gain: 0.36, pan: 0.28, rev: 0.16 },
@@ -384,7 +384,7 @@ export const TRACK_DEFS = {
 
   // ==================================================================== CANTINA 2 (cumbia sonidera)
   cantina2: {
-    bpm: 100, key: 'D harmonic', swing16: 0.53, gain: 1,
+    bpm: 100, key: 'D harmonic', swing16: 0.53, gain: 0.67,
     channels: {
       org: { inst: 'organ', gain: 0.52, pan: 0.05, rev: 0.22 },
       req: { inst: 'requinto', gain: 0.32, pan: -0.32, rev: 0.18 },
@@ -442,7 +442,7 @@ export const TRACK_DEFS = {
   // ==================================================================== MADAM MOLT'S SHOP (lounge)
   // Sleazy swing, 84 BPM, F minor ii-V-i. Walking bass, vibes, muted trumpet, brushes.
   shop: {
-    bpm: 84, key: 'F minor', swing8: 0.64, gain: 1,
+    bpm: 84, key: 'F minor', swing8: 0.64, gain: 0.62,
     channels: {
       tp: { inst: 'mute', gain: 0.55, pan: 0.18, rev: 0.28 },
       vib: { inst: 'vibes', gain: 0.42, pan: -0.25, rev: 0.32, trem: [4.8, 0.3] },
@@ -497,7 +497,7 @@ export const TRACK_DEFS = {
 
   // ==================================================================== RESULTS (triumphant)
   results: {
-    bpm: 118, key: 'C major', gain: 1,
+    bpm: 118, key: 'C major', gain: 0.5,
     channels: {
       tp1: { inst: 'brass', gain: 0.48, pan: -0.1, rev: 0.22, opts: { vibRate: 6, vib: 0.008 } },
       tp2: { inst: 'brass', gain: 0.34, pan: 0.16, rev: 0.22, opts: { vibRate: 5.8, vib: 0.008 } },
@@ -560,7 +560,7 @@ export const TRACK_DEFS = {
 
   // ==================================================================== TRAINING (chill beat)
   training: {
-    bpm: 100, key: 'C major', swing16: 0.58, gain: 1,
+    bpm: 100, key: 'C major', swing16: 0.58, gain: 0.65,
     channels: {
       ep: { inst: 'epiano', gain: 0.4, pan: -0.08, rev: 0.25, lp: 4000 },
       vib: { inst: 'vibes', gain: 0.38, pan: 0.22, rev: 0.38, trem: [4.6, 0.3] },
@@ -607,7 +607,7 @@ export const TRACK_DEFS = {
   // ==================================================================== DEMON MODE
   // Dark drone, heartbeat pulses, detuned music box lullaby, dissonant brass swells. 70 BPM.
   demon: {
-    bpm: 70, key: 'C harmonic', gain: 1,
+    bpm: 70, key: 'C harmonic', gain: 0.61,
     channels: {
       drone: { inst: 'pad', gain: 0.5, rev: 0.35, opts: { a: 3, r: 3, cut: 380, sweep: 0.07 } },
       heart: { inst: 'drum', gain: 0.75 },

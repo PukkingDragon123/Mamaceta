@@ -389,7 +389,8 @@ export function pluck(S, midi, t, dur, vel, to, kind = 'nylon') {
   S._src(src);
   const g = S.gain(0, to);
   src.connect(g);
-  g.gain.setValueAtTime(vel, t);
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(vel, t + 0.0015);
   let end = t + ks.buf.duration / ks.rate;
   if (dur != null && t + dur + 0.07 < end) {
     g.gain.setValueAtTime(vel, t + dur);

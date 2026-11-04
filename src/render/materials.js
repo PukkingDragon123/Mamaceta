@@ -37,6 +37,9 @@ export function voxelMaterial(opts = {}) {
     uEmissiveBoost: { value: o.emissiveBoost },
     uTint: { value: new THREE.Color(1, 1, 1) },
     uDissolve: { value: 0 },
+    uCrack: { value: 0 },
+    uGlow: { value: 0 },
+    uGlowColor: { value: new THREE.Color(0xffd890) },
     uTime: GlobalU.uTime,
   };
   mat.userData.u = u;
@@ -76,6 +79,10 @@ export function voxelMaterial(opts = {}) {
         uniform float uEmissiveBoost;
         uniform vec3 uTint;
         uniform float uDissolve;
+        uniform float uCrack;
+        uniform float uGlow;
+        uniform vec3 uGlowColor;
+        uniform float uTime;
         float vxHash(vec3 p) { p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }`)
       .replace('#include <color_fragment>', `#include <color_fragment>
         {
@@ -89,12 +96,21 @@ export function voxelMaterial(opts = {}) {
           diffuseColor.rgb *= 1.0 - uEdge * (1.0 - smoothstep(0.0, 0.09, e));
           diffuseColor.rgb *= uTint;
           if (uDissolve > 0.0 && hj < uDissolve) discard;
+          if (uCrack > 0.0) {
+            float hc = vxHash(floor(cell * 0.5) + 3.7);
+            float line = step(0.5, fract((cell.x + cell.y * 1.7 + cell.z * 0.6) * 0.33 + hc));
+            if (vxHash(cell + 9.1) < uCrack * 0.45 * (0.4 + line)) diffuseColor.rgb *= 0.28;
+          }
         }`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
         totalEmissiveRadiance += diffuseColor.rgb * vEmissive * uEmissiveBoost;
         if (uRim > 0.0) {
           float rim = 1.0 - clamp(dot(normalize(normal), normalize(vViewPosition)), 0.0, 1.0);
           totalEmissiveRadiance += uRimColor * pow(rim, 2.5) * uRim;
+        }
+        if (uGlow > 0.0) {
+          float gl = vxHash(floor(vVoxPos * 0.5) + floor(uTime * 8.0)) ;
+          totalEmissiveRadiance += uGlowColor * uGlow * (0.4 + 0.6 * step(0.7, gl));
         }
         if (uFlash > 0.0) {
           diffuseColor.rgb = mix(diffuseColor.rgb, uFlashColor, uFlash);

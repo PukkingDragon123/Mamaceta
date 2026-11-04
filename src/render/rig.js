@@ -271,7 +271,7 @@ export class Rig {
     this.squash.rotation.z = p.rootRot;
     this.squash.rotation.x = p.tilt || 0;
     N.hips.position.set(p.hipX, hipH, 0);
-    N.hips.rotation.set(p.hipRoll, p.hipYaw, p.hipRot);
+    N.hips.rotation.set(p.hipRoll, p.hipYaw, -p.hipRot);
     N.legRoot.position.set(p.hipX, hipH, 0);
     N.spine1.rotation.z = -p.sp1;
     N.spine2.rotation.set(0, p.sp2Yaw, -p.sp2);

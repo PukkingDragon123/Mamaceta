@@ -29,6 +29,8 @@ export class Game {
 
   applySettings() {
     const s = this.save.settings;
+    const q = new URLSearchParams(location.search).get('q');
+    if (q) s.quality = q;
     Sound.setVolumes({ master: s.master, music: s.music, sfx: s.sfx });
     this.input.setBindings(s.bindings);
     this.renderer.setQuality(s.quality);

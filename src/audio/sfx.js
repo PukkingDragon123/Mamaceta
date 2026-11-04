@@ -45,24 +45,24 @@ function shards(S, t, n, spread, peak, fmin = 2500, fmax = 8000, panW = 0) {
 
 export const SFX = {
   // ================================================================== UI
-  ui_move: { lvl: -27, v: 3, len: 0.07, rev: 0.04, ui: 1, jit: 0.03, sr: 'hi',
+  ui_move: { lvl: -29, v: 3, len: 0.07, rev: 0.04, ui: 1, jit: 0.03, sr: 'hi',
     fn(S, t) { S.wood({ t, f: S.r(1750, 1950), d: 0.035, peak: 1, click: 0.35 }); } },
 
-  ui_select: { lvl: -22, v: 2, len: 0.16, rev: 0.06, ui: 1, jit: 0.02,
+  ui_select: { lvl: -24, v: 2, len: 0.16, rev: 0.06, ui: 1, jit: 0.02,
     fn(S, t) {
       S.wood({ t, f: 720, d: 0.07, peak: 0.9, click: 0.4 });
       S.bubble({ t: t + 0.035, f: 520, rise: 2.4, d: 0.07, peak: 0.55 });
       S.noise({ t: t + 0.035, a: 0.0005, d: 0.006, peak: 0.12, f: [['bp', 3000, 1]] });
     } },
 
-  ui_back: { lvl: -24, len: 0.2, rev: 0.05, ui: 1, jit: 0.02, sr: 'lo',
+  ui_back: { lvl: -26, len: 0.2, rev: 0.05, ui: 1, jit: 0.02, sr: 'lo',
     fn(S, t) {
       S.thump({ t, f0: 210, f1: 110, ft: 0.06, d: 0.16, peak: 1, click: 0.04 });
       S.noise({ t, a: 0.004, d: 0.08, peak: 0.25, color: 'pink', f: [['lp', 900]] });
       S.bubble({ t: t + 0.02, f: 480, rise: 0.6, d: 0.06, peak: 0.25 });
     } },
 
-  ui_error: { lvl: -21, len: 0.32, rev: 0.04, ui: 1, jit: 0,
+  ui_error: { lvl: -23, len: 0.32, rev: 0.04, ui: 1, jit: 0,
     fn(S, t) {
       S.wood({ t, f: 230, d: 0.09, peak: 0.9, click: 0.3 });
       const l = S.lp(1100, 0.8);
@@ -71,13 +71,13 @@ export const SFX = {
       S.tone({ type: 'square', f: 123, t: t + 0.03, pts, to: l });
     } },
 
-  ui_tab: { lvl: -25, v: 2, len: 0.16, rev: 0.05, ui: 1,
+  ui_tab: { lvl: -26.5, v: 2, len: 0.16, rev: 0.05, ui: 1,
     fn(S, t) {
       S.noise({ t, a: 0.03, d: 0.09, peak: 0.6, color: 'pink', f: [['bp', 900, 1.4, 2600, 0.1], ['lp', 5000]] });
       S.wood({ t: t + 0.1, f: 1300, d: 0.03, peak: 0.35, click: 0.2 });
     } },
 
-  ui_type: { lvl: -27, v: 4, len: 0.06, rev: 0.02, ui: 1, jit: 0.05, sr: 'hi',
+  ui_type: { lvl: -29, v: 4, len: 0.06, rev: 0.02, ui: 1, jit: 0.05, sr: 'hi',
     fn(S, t) {
       S.noise({ t, a: 0.0003, d: 0.006, peak: 0.8, f: [['hp', 2500]] });
       S.tone({ f: S.r(2900, 3500), t, a: 0.0004, d: 0.02, peak: 0.25 });
@@ -85,14 +85,14 @@ export const SFX = {
       S.noise({ t: t + S.r(0.018, 0.026), a: 0.0004, d: 0.005, peak: 0.3, f: [['bp', 1800, 1.2]] });
     } },
 
-  ui_coin: { lvl: -22, v: 3, len: 0.35, rev: 0.1, ui: 1, jit: 0.02, sr: 'hi',
+  ui_coin: { lvl: -24, v: 3, len: 0.35, rev: 0.1, ui: 1, jit: 0.02, sr: 'hi',
     fn(S, t) {
       const f = S.r(2400, 2800);
       S.modal({ t, f, ratios: [1, 2.32, 3.71, 5.1], amps: [1, 0.45, 0.25, 0.12], decays: [0.28, 0.14, 0.08, 0.05], peak: 0.8 });
       S.noise({ t, a: 0.0004, d: 0.005, peak: 0.25, f: [['hp', 3000]] });
     } },
 
-  ui_coins: { lvl: -22, len: 1.3, ch: 2, rev: 0.12, ui: 1, jit: 0, sr: 'hi',
+  ui_coins: { lvl: -23, len: 1.3, ch: 2, rev: 0.12, ui: 1, jit: 0, sr: 'hi',
     fn(S, t) {
       const n = 16, set = [2349, 2637, 2960, 3136, 3520];
       for (let i = 0; i < n; i++) {
@@ -104,7 +104,7 @@ export const SFX = {
       }
     } },
 
-  ui_purchase: { lvl: -18, len: 1.5, rev: 0.2, ui: 1, jit: 0,
+  ui_purchase: { lvl: -19, len: 1.5, rev: 0.2, ui: 1, jit: 0,
     fn(S, t) {
       S.noise({ t, a: 0.001, d: 0.05, peak: 0.7, f: [['bp', 2200, 1.2]] });
       S.metal({ t, f: 900, d: 0.12, peak: 0.35, strike: 0.3, n: 4 });
@@ -135,7 +135,7 @@ export const SFX = {
       S.grains({ t: t + 0.12, dur: 0.15, rate: 120, glen: 0.002, peak: 0.25, f: [['bp', 2500, 2]] });
     } },
 
-  ui_door_creak: { lvl: -20, len: 2.4, rev: 0.35, ui: 1, jit: 0, sr: 'lo',
+  ui_door_creak: { lvl: -22, len: 2.4, rev: 0.35, ui: 1, jit: 0, sr: 'lo',
     fn(S, t) {
       const r = S.res([[180, 10, 1.2], [410, 12, 1], [870, 14, 0.7], [1650, 12, 0.35]]);
       S.pulses({
@@ -147,7 +147,7 @@ export const SFX = {
       S.noise({ t, a: 0.3, d: 1.8, hold: 0.2, peak: 0.3, color: 'brown', f: [['lp', 160]] });
     } },
 
-  ui_door_slam: { lvl: -12, len: 2.0, rev: 0.45, ui: 1, jit: 0, prio: 3,
+  ui_door_slam: { lvl: -14, len: 2.0, rev: 0.45, ui: 1, jit: 0, prio: 3,
     fn(S, t) {
       S.thump({ t, f0: 85, f1: 34, ft: 0.25, d: 1.2, peak: 1, click: 0.3, drive: 1.5 });
       S.metal({ t, f: 112, d: 1.4, peak: 0.8, strike: 0.9, bright: 0.7, dk: 0.85 });
@@ -156,14 +156,14 @@ export const SFX = {
       S.grains({ t: t + 0.03, dur: 0.4, rate: 90, glen: 0.003, peak: 0.12, f: [['bp', 1400, 3]] });
     } },
 
-  ui_whoosh: { lvl: -21, v: 2, len: 0.8, rev: 0.25, ui: 1,
+  ui_whoosh: { lvl: -22, v: 2, len: 0.8, rev: 0.25, ui: 1,
     fn(S, t) {
       S.whoosh({ t, d: 0.45, f0: 280, f1: 1900, f2: 600, q: 1.1, peak: 1, att: 0.5 });
       S.whoosh({ t: t + 0.02, d: 0.4, f0: 600, f1: 3200, f2: 1200, q: 2, peak: 0.35, att: 0.5, color: 'white' });
       S.bubbles({ t: t + 0.18, n: 9, spread: 0.45, fmin: 450, fmax: 1500, peak: 0.25, fade: 1 });
     } },
 
-  ui_lock_in: { lvl: -15, len: 1.4, rev: 0.3, ui: 1, jit: 0, prio: 3,
+  ui_lock_in: { lvl: -16.5, len: 1.4, rev: 0.3, ui: 1, jit: 0, prio: 3,
     fn(S, t) {
       S.thump({ t, f0: 130, f1: 48, ft: 0.06, d: 0.35, peak: 1, click: 0.4, drive: 2 });
       S.noise({ t, a: 0.0008, d: 0.05, peak: 0.6, f: [['bp', 1400, 0.9]] });
@@ -172,113 +172,113 @@ export const SFX = {
       S.sparkle({ t: t + 0.06, n: 5, spread: 0.3, fmin: 3000, fmax: 7000, peak: 0.08 });
     } },
 
-  ui_timer_tick: { lvl: -24, v: 2, len: 0.07, rev: 0.05, ui: 1, jit: 0.01, sr: 'hi',
+  ui_timer_tick: { lvl: -25.5, v: 2, len: 0.07, rev: 0.05, ui: 1, jit: 0.01, sr: 'hi',
     fn(S, t, _p, v) {
       S.wood({ t, f: v ? 1700 : 2300, d: 0.03, peak: 1, click: 0.5 });
       S.tone({ f: v ? 3400 : 4600, t, a: 0.0004, d: 0.01, peak: 0.2 });
     } },
 
-  ui_vote: { lvl: -21, v: 2, len: 0.5, rev: 0.2, ui: 1,
+  ui_vote: { lvl: -23, v: 2, len: 0.5, rev: 0.2, ui: 1,
     fn(S, t) {
       S.metal({ t, f: S.r(480, 560), d: 0.32, peak: 1, strike: 0.7, n: 6 });
       S.thump({ t, f0: 200, f1: 120, d: 0.06, peak: 0.3, click: 0 });
     } },
 
-  ui_roulette: { lvl: -26, v: 3, len: 0.05, rev: 0.03, ui: 1, jit: 0.03, sr: 'hi',
+  ui_roulette: { lvl: -28.5, v: 3, len: 0.05, rev: 0.03, ui: 1, jit: 0.03, sr: 'hi',
     fn(S, t) {
       S.wood({ t, f: S.r(1400, 1600), d: 0.02, peak: 1, click: 0.6 });
       S.tone({ f: 3000, t, a: 0.0003, d: 0.008, peak: 0.2 });
     } },
 
-  ui_rope: { lvl: -24, v: 2, len: 0.6, rev: 0.12, ui: 1,
+  ui_rope: { lvl: -26, v: 2, len: 0.6, rev: 0.12, ui: 1,
     fn(S, t) {
       const r = S.res([[480, 6, 1], [950, 7, 0.6], [1900, 5, 0.3]]);
       S.pulses({ t, dur: 0.45, rate: (x) => 70 + 50 * Math.sin(x * Math.PI), amp: (x) => Math.sin(Math.PI * x), jit: 0.25, peak: 4, to: r, width: 0.0006 });
       S.noise({ t, a: 0.1, d: 0.3, peak: 0.08, color: 'pink', f: [['bp', 1200, 1]] });
     } },
 
-  ui_equip: { lvl: -22, len: 0.8, rev: 0.2, ui: 1, jit: 0.01,
+  ui_equip: { lvl: -22.5, len: 0.8, rev: 0.2, ui: 1, jit: 0.01,
     fn(S, t) {
       S.grains({ t, dur: 0.22, rate: 400, glen: 0.0015, peak: 0.6, amp: (x) => Math.sin(Math.PI * Math.min(1, x * 1.3)), f: [['bp', 2600, 0.8], ['lp', 6000]] });
       S.noise({ t, a: 0.05, d: 0.15, peak: 0.25, color: 'pink', f: [['bp', 1500, 0.8]] });
       S.sparkle({ t: t + 0.15, n: 5, spread: 0.3, fmin: 2600, fmax: 5200, peak: 0.25, rising: true, d: 0.35 });
     } },
 
-  ui_levelup: { lvl: -18, len: 1.7, rev: 0.25, ui: 1, jit: 0,
+  ui_levelup: { lvl: -19, len: 1.7, rev: 0.25, ui: 1, jit: 0,
     fn(S, t) {
       [72, 76, 79, 84].forEach((m, i) => SAMPLE_DEFS.marimba.fn(S.with(S.gain(0.7)), t + i * 0.075, m));
       for (const m of [72, 76, 79, 84]) brass(S, m, t + 0.3, 0.55, 0.75, S.out, { scoop: 20 });
       S.sparkle({ t: t + 0.3, n: 6, spread: 0.5, fmin: 2500, fmax: 6000, peak: 0.1 });
     } },
 
-  ui_challenge: { lvl: -18, len: 2.0, rev: 0.3, ui: 1, jit: 0,
+  ui_challenge: { lvl: -20.5, len: 2.0, rev: 0.3, ui: 1, jit: 0,
     fn(S, t) {
       [[79, 0], [84, 0.09], [88, 0.18], [91, 0.27]].forEach(([m, dt], i) => SAMPLE_DEFS.vibes.fn(S.with(S.gain(i === 3 ? 0.8 : 0.6)), t + dt, m));
       S.sparkle({ t: t + 0.27, n: 7, spread: 0.6, fmin: 3000, fmax: 8000, peak: 0.1, fade: 1 });
     } },
 
-  ui_pop: { lvl: -24, v: 3, len: 0.09, rev: 0.05, ui: 1, jit: 0.04,
+  ui_pop: { lvl: -26, v: 3, len: 0.09, rev: 0.05, ui: 1, jit: 0.04,
     fn(S, t) {
       S.bubble({ t, f: S.r(480, 560), rise: 2.2, d: 0.045, peak: 0.8 });
       S.noise({ t, a: 0.0003, d: 0.004, peak: 0.2, f: [['bp', 3500, 1]] });
     } },
 
-  ui_paper: { lvl: -25, v: 2, len: 0.4, rev: 0.05, ui: 1,
+  ui_paper: { lvl: -26.5, v: 2, len: 0.4, rev: 0.05, ui: 1,
     fn(S, t) {
       S.grains({ t, dur: 0.3, rate: (x) => 60 + 140 * Math.sin(Math.PI * x), glen: 0.003, peak: 0.7, amp: (x) => Math.sin(Math.PI * x), f: [['bp', 3000, 0.7], ['hp', 900]] });
       S.noise({ t, a: 0.05, d: 0.2, peak: 0.2, f: [['bp', 4500, 1]] });
     } },
 
   // ================================================================== combat: movement
-  whiff_light: { lvl: -21, v: 3, len: 0.25, rev: 0.08,
+  whiff_light: { lvl: -25, v: 3, len: 0.25, rev: 0.08,
     fn(S, t) {
       S.whoosh({ t, d: S.r(0.14, 0.18), f0: S.r(380, 480), f1: S.r(1400, 1800), q: 1.3, peak: 1, att: 0.42, lp: 3500 });
       S.tone({ f: 170, f1: 110, t, a: 0.02, d: 0.08, peak: 0.12 });
     } },
 
-  whiff_heavy: { lvl: -19, v: 3, len: 0.45, rev: 0.1,
+  whiff_heavy: { lvl: -23, v: 3, len: 0.45, rev: 0.1,
     fn(S, t) {
       S.whoosh({ t, d: S.r(0.28, 0.34), f0: 220, f1: S.r(800, 1000), q: 1.0, peak: 1, att: 0.5, color: 'pink', lp: 2500 });
       S.whoosh({ t, d: 0.3, f0: 120, f1: 300, q: 0.8, peak: 0.6, att: 0.5, color: 'brown', lp: 800 });
       S.bubbles({ t: t + 0.18, n: 4, spread: 0.15, fmin: 400, fmax: 900, peak: 0.15 });
     } },
 
-  dash: { lvl: -20, v: 2, len: 0.5, rev: 0.12,
+  dash: { lvl: -23, v: 2, len: 0.5, rev: 0.12,
     fn(S, t) {
       S.whoosh({ t, d: 0.24, f0: 350, f1: 1500, q: 1.2, peak: 1, att: 0.35 });
       S.bubbles({ t: t + 0.05, n: 10, spread: 0.3, fmin: 500, fmax: 1700, peak: 0.3, fade: 1 });
     } },
 
-  dodge: { lvl: -21, v: 3, len: 0.18, rev: 0.06,
+  dodge: { lvl: -23.5, v: 3, len: 0.18, rev: 0.06,
     fn(S, t) { S.whoosh({ t, d: S.r(0.1, 0.13), f0: 800, f1: S.r(2300, 2800), q: 1.6, peak: 1, att: 0.4, color: 'white', lp: 6000 }); } },
 
-  jump: { lvl: -21, v: 2, len: 0.22, rev: 0.08,
+  jump: { lvl: -24, v: 2, len: 0.22, rev: 0.08,
     fn(S, t) {
       S.tone({ f: S.r(230, 260), f1: S.r(650, 720), ft: 0.11, t, a: 0.002, d: 0.13, peak: 0.8 });
       S.whoosh({ t, d: 0.12, f0: 500, f1: 1500, q: 1.2, peak: 0.25, att: 0.3 });
     } },
 
-  double_jump: { lvl: -20, v: 2, len: 0.45, rev: 0.12,
+  double_jump: { lvl: -23, v: 2, len: 0.45, rev: 0.12,
     fn(S, t) {
       S.whoosh({ t, d: 0.22, f0: 260, f1: 900, q: 1.1, peak: 0.8, att: 0.55, color: 'pink' });
       S.tone({ f: 300, f1: 820, ft: 0.13, t: t + 0.02, a: 0.002, d: 0.14, peak: 0.45 });
       S.bubbles({ t: t + 0.06, n: 8, spread: 0.28, fmin: 600, fmax: 1800, peak: 0.28, fade: 1 });
     } },
 
-  land: { lvl: -20, v: 3, len: 0.25, rev: 0.05, sr: 'lo',
+  land: { lvl: -24, v: 3, len: 0.25, rev: 0.05, sr: 'lo',
     fn(S, t) {
       S.thump({ t, f0: S.r(125, 140), f1: 68, ft: 0.05, d: 0.12, peak: 1, click: 0.05 });
       S.noise({ t, a: 0.003, d: 0.1, peak: 0.35, color: 'pink', f: [['lp', 1200]] });
     } },
 
-  land_heavy: { lvl: -15, v: 2, len: 0.6, rev: 0.12, sr: 'lo', prio: 2,
+  land_heavy: { lvl: -18, v: 2, len: 0.6, rev: 0.12, sr: 'lo', prio: 2,
     fn(S, t) {
       S.thump({ t, f0: 95, f1: 38, ft: 0.08, d: 0.35, peak: 1, click: 0.12, drive: 1.8 });
       S.noise({ t, a: 0.004, d: 0.25, peak: 0.45, color: 'brown', f: [['lp', 700]] });
       S.grains({ t: t + 0.01, dur: 0.18, rate: 200, glen: 0.002, peak: 0.12, f: [['bp', 1500, 1]] });
     } },
 
-  step: { lvl: -29, v: 4, len: 0.08, rev: 0, prio: 0, jit: 0.06,
+  step: { lvl: -31, v: 4, len: 0.08, rev: 0, prio: 0, jit: 0.06,
     fn(S, t) {
       S.tone({ f: S.r(260, 330), f1: 170, ft: 0.02, t, a: 0.001, d: 0.03, peak: 0.7 });
       S.noise({ t, a: 0.0006, d: 0.015, peak: 0.4, color: 'pink', f: [['bp', S.r(900, 1400), 1]] });
@@ -322,19 +322,22 @@ export const SFX = {
       S.metal({ t, f: 160, d: 0.5, peak: 0.15, strike: 0 });
     } },
 
-  cavitation: { lvl: -11, v: 3, len: 0.4, rev: 0.12, prio: 4, sr: 'hi',
+  cavitation: { lvl: -11, v: 3, len: 0.42, rev: 0.14, prio: 4, sr: 'hi',
     fn(S, t) {
-      // ultra-short broadband snap
-      S.noise({ t, a: 0.0002, d: 0.0035, peak: 1, f: [['hp', 900]] });
-      // ringing crack body
-      const r = S.res([[S.r(2400, 2900), 6, 1], [S.r(4800, 5600), 7, 0.7], [S.r(8500, 9500), 5, 0.4]]);
-      S.noise({ t, a: 0.0002, d: 0.006, peak: 2.5, to: r });
-      // popping bubble collapse
-      S.tone({ f: 520, f1: 160, ft: 0.025, t, a: 0.0005, d: 0.035, peak: 0.7 });
-      S.noise({ t: t + 0.0065, a: 0.0002, d: 0.003, peak: 0.35, f: [['hp', 1500]] });
-      // brief high-frequency cavitation sizzle
-      S.grains({ t: t + 0.002, dur: 0.22, rate: (x) => 2500 * Math.pow(1 - x, 1.5) + 80, glen: 0.00015, peak: 0.35, amp: (x) => Math.pow(1 - x, 2), f: [['hp', 4500]] });
-      S.noise({ t: t + 0.003, a: 0.002, d: 0.16, peak: 0.12, f: [['hp', 6000]] });
+      // 1) the snap: ultra-short broadband burst, saturated so it is dense rather than just peaky
+      const dr = S.drive(4);
+      S.noise({ t, a: 0.0002, d: 0.005, peak: 1, f: [['hp', 700]], to: dr });
+      // 2) ringing crack body (shell + bubble-wall resonances), into the same saturator
+      const r = S.res([[S.r(2300, 2800), 5, 1], [S.r(4600, 5400), 6, 0.8], [S.r(8200, 9200), 5, 0.5]], dr);
+      S.noise({ t, a: 0.0002, d: 0.012, peak: 3, to: r });
+      // 3) the "pop" of the collapsing cavitation bubble, with weight
+      S.tone({ f: 900, f1: 140, ft: 0.03, t, a: 0.0004, d: 0.05, peak: 0.8, to: S.drive(2) });
+      S.thump({ t, f0: 160, f1: 60, ft: 0.04, d: 0.09, peak: 0.6, click: 0 });
+      // 4) a smaller reflected snap
+      S.noise({ t: t + 0.007, a: 0.0002, d: 0.003, peak: 0.4, f: [['hp', 1500]] });
+      // 5) brief high-frequency sizzle: dense micro-crackle above 4 kHz + hiss
+      S.grains({ t: t + 0.003, dur: 0.26, rate: (x) => 4000 * Math.pow(1 - x, 1.4) + 120, glen: 0.00012, peak: 0.6, amp: (x) => Math.pow(1 - x, 1.6), f: [['hp', 4200]] });
+      S.noise({ t: t + 0.004, a: 0.003, d: 0.2, peak: 0.22, f: [['hp', 5500]] });
     } },
 
   shockwave: { lvl: -11, v: 2, len: 2.0, rev: 0.3, prio: 3, sr: 'lo',
@@ -347,8 +350,9 @@ export const SFX = {
 
   block: { lvl: -16, v: 4, len: 0.15, rev: 0.06, prio: 2,
     fn(S, t) {
-      S.modal({ t, f: S.r(1300, 1500), ratios: [1, 1.52, 2.33], amps: [1, 0.6, 0.35], decays: [0.04, 0.03, 0.02], peak: 0.7 });
-      S.noise({ t, a: 0.0003, d: 0.012, peak: 0.8, f: [['bp', 3200, 1.2]] });
+      const dr = S.drive(2.5);
+      S.modal({ t, f: S.r(1300, 1500), ratios: [1, 1.52, 2.33], amps: [1, 0.6, 0.35], decays: [0.05, 0.035, 0.02], peak: 0.7, to: dr });
+      S.noise({ t, a: 0.0003, d: 0.014, peak: 0.8, f: [['bp', 3200, 1.2]], to: dr });
       S.wood({ t, f: S.r(330, 380), d: 0.04, peak: 0.6, click: 0 });
       S.noise({ t: t + 0.009, a: 0.0003, d: 0.006, peak: 0.35, f: [['bp', 2600, 1.5]] });
     } },
@@ -386,7 +390,7 @@ export const SFX = {
       shards(S, t + 0.02, 9, 0.5, 0.2, 1500, 5200);
     } },
 
-  molt_start: { lvl: -18, len: 3.3, rev: 0.2, jit: 0,
+  molt_start: { lvl: -19, len: 3.3, rev: 0.2, jit: 0,
     fn(S, t) {
       const D = 3.0;
       const body = S.res([[480, 9, 1], [1100, 11, 0.6], [2200, 9, 0.3]]);
@@ -415,7 +419,7 @@ export const SFX = {
       S.sparkle({ t: tp + 0.08, n: 8, spread: 0.7, fmin: 2500, fmax: 7500, peak: 0.18, rising: true, d: 0.4 });
     } },
 
-  charge_start: { lvl: -20, len: 0.75, rev: 0.12, jit: 0.01,
+  charge_start: { lvl: -22, len: 0.75, rev: 0.12, jit: 0.01,
     fn(S, t) {
       let tt = t;
       while (tt < t + 0.6) {
@@ -428,7 +432,7 @@ export const SFX = {
       S.tone({ type: 'triangle', f: 200, f1: 420, ft: 0.6, t, a: 0.1, d: 0.15, hold: 0.4, peak: 0.08 });
     } },
 
-  charge_full: { lvl: -18, len: 1.0, rev: 0.25, sr: 'hi', jit: 0,
+  charge_full: { lvl: -20, len: 1.0, rev: 0.25, sr: 'hi', jit: 0,
     fn(S, t) {
       S.modal({ t, f: 2637, ratios: [1, 2, 2.76, 5.4], amps: [1, 0.4, 0.25, 0.1], decays: [0.7, 0.4, 0.3, 0.12], peak: 0.7 });
       S.modal({ t: t + 0.003, f: 1318.5, ratios: [1, 3], amps: [1, 0.2], decays: [0.6, 0.2], peak: 0.35 });
@@ -436,7 +440,7 @@ export const SFX = {
       S.sparkle({ t: t + 0.02, n: 4, spread: 0.25, fmin: 4000, fmax: 8000, peak: 0.08 });
     } },
 
-  throw_grab: { lvl: -19, v: 2, len: 0.3, rev: 0.08,
+  throw_grab: { lvl: -20.5, v: 2, len: 0.3, rev: 0.08,
     fn(S, t) {
       S.whoosh({ t, d: 0.14, f0: 400, f1: 1300, q: 1.2, peak: 0.7, att: 0.6 });
       S.thump({ t: t + 0.12, f0: 220, f1: 120, d: 0.06, peak: 0.6, click: 0 });
@@ -475,7 +479,7 @@ export const SFX = {
     } },
 
   // ================================================================== ultimates / KO / QTE
-  ult_ready: { lvl: -18, len: 1.8, rev: 0.3, sr: 'hi', jit: 0,
+  ult_ready: { lvl: -20, len: 1.8, rev: 0.3, sr: 'hi', jit: 0,
     fn(S, t) {
       [76, 83, 88, 95].forEach((m, i) => chime(S, m, t + i * 0.06, 0.35, undefined, 1.3));
       shimmer(S, mtof(100), t, 1.6, 0.2, 14);
@@ -520,7 +524,7 @@ export const SFX = {
       S.grains({ t, dur: 0.4, rate: (x) => 1500 * (1 - x) + 30, glen: 0.0008, peak: 0.3, f: [['hp', 2500]], to: both });
     } },
 
-  qte_heartbeat: { lvl: -15, len: 0.6, rev: 0.05, sr: 'lo', jit: 0.01,
+  qte_heartbeat: { lvl: -17.5, len: 0.6, rev: 0.05, sr: 'lo', jit: 0.01,
     fn(S, t) {
       S.thump({ t, f0: 70, f1: 42, ft: 0.06, d: 0.2, peak: 1, click: 0, drive: 1.4 });
       S.noise({ t, a: 0.004, d: 0.08, peak: 0.25, color: 'pink', f: [['lp', 300]] });
@@ -528,7 +532,7 @@ export const SFX = {
       S.noise({ t: t + 0.22, a: 0.004, d: 0.08, peak: 0.18, color: 'pink', f: [['lp', 300]] });
     } },
 
-  qte_press: { lvl: -17, v: 2, len: 0.2, rev: 0.05, ui: 1, jit: 0.02,
+  qte_press: { lvl: -18.5, v: 2, len: 0.2, rev: 0.05, ui: 1, jit: 0.02,
     fn(S, t) {
       S.noise({ t, a: 0.0003, d: 0.006, peak: 0.8, f: [['bp', 2500, 1]] });
       S.thump({ t, f0: 260, f1: 140, ft: 0.03, d: 0.07, peak: 0.8, click: 0 });
@@ -551,7 +555,7 @@ export const SFX = {
       S.tone({ f: 600, f1: 180, ft: 0.08, t, a: 0.0005, d: 0.1, peak: 0.5 });
     } },
 
-  dizzy: { lvl: -21, len: 1.3, ch: 2, rev: 0.2, sr: 'hi', jit: 0.02,
+  dizzy: { lvl: -22, len: 1.3, ch: 2, rev: 0.2, sr: 'hi', jit: 0.02,
     fn(S, t) {
       for (let i = 0; i < 6; i++) {
         const tt = t + i * 0.17;
@@ -563,7 +567,7 @@ export const SFX = {
     } },
 
   // ================================================================== projectiles, eating, critters
-  projectile_bubble: { lvl: -19, v: 2, len: 0.55, rev: 0.15,
+  projectile_bubble: { lvl: -20.5, v: 2, len: 0.55, rev: 0.15,
     fn(S, t) {
       S.tone({ f: 260, f1: 560, ft: 0.35, t, a: 0.01, d: 0.3, hold: 0.08, peak: 0.6, vib: { rate: 11, depth: 0.12 } });
       S.whoosh({ t, d: 0.3, f0: 300, f1: 1200, q: 1.2, peak: 0.5, att: 0.3 });
@@ -585,7 +589,7 @@ export const SFX = {
       S.grains({ t: t + 0.07, dur: 0.08, rate: 400, glen: 0.0006, peak: 0.3, f: [['bp', 2500, 1]] });
     } },
 
-  munch: { lvl: -19, v: 2, len: 0.65, rev: 0.04,
+  munch: { lvl: -20.5, v: 2, len: 0.65, rev: 0.04,
     fn(S, t) {
       for (let i = 0; i < 3; i++) {
         const tt = t + i * 0.17 + S.r(0, 0.02);
@@ -595,14 +599,14 @@ export const SFX = {
       }
     } },
 
-  gulp: { lvl: -19, v: 2, len: 0.35, rev: 0.06,
+  gulp: { lvl: -21, v: 2, len: 0.35, rev: 0.06,
     fn(S, t) {
       S.noise({ t, pts: [[0, 0], [0.01, 0.8], [0.09, 0.4], [0.16, 0]], color: 'pink', f: [['bp', 1000, 6, 320, 0.12]] });
       S.tone({ type: 'triangle', f: 220, f1: 90, ft: 0.1, t, a: 0.005, d: 0.12, peak: 0.6 });
       S.bubble({ t: t + 0.12, f: 380, rise: 1.8, d: 0.08, peak: 0.4 });
     } },
 
-  hiccup: { lvl: -19, v: 2, len: 0.25, rev: 0.05,
+  hiccup: { lvl: -21, v: 2, len: 0.25, rev: 0.05,
     fn(S, t) {
       S.noise({ t, a: 0.0003, d: 0.006, peak: 0.6, f: [['bp', 1500, 1]] });
       const g = S.gain(0, null);
@@ -633,14 +637,14 @@ export const SFX = {
       S.lfo(3.1, 5, o.frequency, t, t + D + 0.02);
     } },
 
-  puru_squeak: { lvl: -18, v: 3, len: 0.25, rev: 0.12, sr: 'hi',
+  puru_squeak: { lvl: -20, v: 3, len: 0.25, rev: 0.12, sr: 'hi',
     fn(S, t) {
       const f = S.r(1150, 1350);
       S.tone({ f, fpts: [[0.05, f * 1.5], [0.14, f * 1.15]], t, a: 0.008, d: 0.1, hold: 0.05, peak: 0.7, vib: { rate: 22, depth: 0.03 } });
       S.tone({ type: 'triangle', f: f * 2, fpts: [[0.05, f * 3], [0.14, f * 2.3]], t, a: 0.008, d: 0.08, hold: 0.05, peak: 0.12 });
     } },
 
-  puru_boing: { lvl: -18, v: 2, len: 0.6, rev: 0.12,
+  puru_boing: { lvl: -20, v: 2, len: 0.6, rev: 0.12,
     fn(S, t) {
       const l = S.lp(1400, 1);
       const g = S.gain(0, l);
@@ -682,7 +686,7 @@ export const SFX = {
       S.modal({ t, f: 520, ratios: [1, 1.6, 2.4], amps: [1, 0.5, 0.25], decays: [0.08, 0.05, 0.03], peak: 0.4 });
     } },
 
-  demon_transform: { lvl: -14, len: 3.4, ch: 2, rev: 0.35, prio: 4, jit: 0,
+  demon_transform: { lvl: -15.5, len: 3.4, ch: 2, rev: 0.35, prio: 4, jit: 0,
     fn(S, t) {
       // 1) glass / plastic crack
       S.noise({ t, a: 0.0003, d: 0.02, peak: 0.9, f: [['bp', 3000, 0.8]] });
@@ -714,7 +718,7 @@ export const SFX = {
       }
     } },
 
-  demon_whisper: { lvl: -20, v: 2, len: 1.2, ch: 2, rev: 0.4, jit: 0.03,
+  demon_whisper: { lvl: -23.5, v: 2, len: 1.2, ch: 2, rev: 0.4, jit: 0.03,
     fn(S, t) {
       const p = S.pan(S.r(-0.4, 0.4));
       S.noise({ t, pts: [[0, 0], [0.15, 0.6], [0.45, 0.3], [0.58, 0]], color: 'pink', f: [['bp', S.r(650, 750), 6, 480, 0.5]], to: p });
@@ -724,7 +728,7 @@ export const SFX = {
       S.tone({ f: 880, t: t + 0.1, a: 0.2, d: 0.7, peak: 0.03, vib: { rate: 6, depth: 0.02 }, to: p });
     } },
 
-  demon_slash: { lvl: -16, v: 2, len: 0.5, rev: 0.25,
+  demon_slash: { lvl: -17.5, v: 2, len: 0.5, rev: 0.25,
     fn(S, t) {
       S.whoosh({ t, d: 0.26, f0: 180, f1: 1400, f2: 250, q: 1.4, peak: 1, att: 0.4, color: 'pink', lp: 3000 });
       const dr = S.drive(4);
@@ -742,7 +746,7 @@ export const SFX = {
       S.noise({ t, a: 0.01, d: 0.8, peak: 0.3, color: 'brown', f: [['lp', 250]] });
     } },
 
-  belly_bounce: { lvl: -17, v: 2, len: 0.7, rev: 0.12,
+  belly_bounce: { lvl: -19, v: 2, len: 0.7, rev: 0.12,
     fn(S, t) {
       const g = S.gain(0, S.lp(900));
       envPoints(g.gain, t, [[0, 0], [0.006, 0.9], [0.6, 0.0008, 'e']]);
@@ -775,13 +779,13 @@ export const SFX = {
       for (let i = 0; i < 10; i++) S.metal({ t: t + 0.17 + i * 0.025 + S.r(0, 0.008), f: S.r(1800, 3200), d: 0.03, peak: 0.25 * (1 - i / 12), strike: 0.4, n: 3 });
     } },
 
-  junk_toss: { lvl: -20, v: 2, len: 0.45, rev: 0.1,
+  junk_toss: { lvl: -22, v: 2, len: 0.45, rev: 0.1,
     fn(S, t) {
       S.whoosh({ t, d: 0.32, f0: 300, f1: 1300, q: 1.1, peak: 0.9, att: 0.4 });
       S.whoosh({ t: t + 0.1, d: 0.2, f0: 500, f1: 900, q: 3, peak: 0.25, att: 0.5 });
     } },
 
-  duck_squeak: { lvl: -18, v: 2, len: 0.35, rev: 0.08,
+  duck_squeak: { lvl: -20, v: 2, len: 0.35, rev: 0.08,
     fn(S, t) {
       const D = 0.24, f = S.r(1000, 1150);
       const fm = S.bp(2200, 3);
@@ -796,7 +800,7 @@ export const SFX = {
       S.noise({ t, a: 0.01, d: D, peak: 0.12, f: [['bp', 3000, 1]] });
     } },
 
-  boot_thud: { lvl: -16, v: 2, len: 0.3, rev: 0.08, sr: 'lo',
+  boot_thud: { lvl: -18, v: 2, len: 0.3, rev: 0.08, sr: 'lo',
     fn(S, t) {
       S.thump({ t, f0: 150, f1: 70, ft: 0.04, d: 0.13, peak: 1, click: 0.08 });
       S.noise({ t, a: 0.001, d: 0.05, peak: 0.6, color: 'pink', f: [['bp', 700, 1.2]] });
@@ -830,7 +834,7 @@ export const SFX = {
       S.noise({ t, a: 0.0005, d: 0.02, peak: 0.4, f: [['bp', 900, 1]] });
     } },
 
-  barrel_roll: { lvl: -19, v: 2, len: 0.5, rev: 0.12, sr: 'lo',
+  barrel_roll: { lvl: -21.5, v: 2, len: 0.5, rev: 0.12, sr: 'lo',
     fn(S, t) {
       const g = S.gain(0);
       envPoints(g.gain, t, [[0, 0], [0.04, 0.8], [0.32, 0.6], [0.42, 0]]);
@@ -850,7 +854,7 @@ export const SFX = {
       S.thump({ t, f0: 140, f1: 70, d: 0.15, peak: 0.6, click: 0 });
     } },
 
-  crate_hit: { lvl: -16, v: 3, len: 0.3, rev: 0.1,
+  crate_hit: { lvl: -17, v: 3, len: 0.3, rev: 0.1,
     fn(S, t) {
       S.wood({ t, f: S.r(210, 250), d: 0.12, peak: 1, click: 0.5 });
       S.thump({ t, f0: 150, f1: 85, d: 0.1, peak: 0.5, click: 0 });
@@ -865,7 +869,7 @@ export const SFX = {
       shards(S, t, 14, 0.6, 0.25);
     } },
 
-  mug_clink: { lvl: -20, v: 2, len: 0.6, rev: 0.15, sr: 'hi',
+  mug_clink: { lvl: -23, v: 2, len: 0.6, rev: 0.15, sr: 'hi',
     fn(S, t) {
       S.modal({ t, f: S.r(2100, 2400), ratios: [1, 2.12, 3.3, 4.7], amps: [1, 0.45, 0.2, 0.08], decays: [0.4, 0.22, 0.12, 0.06], peak: 0.8 });
       S.noise({ t, a: 0.0003, d: 0.006, peak: 0.3, f: [['bp', 4000, 1]] });
@@ -887,14 +891,14 @@ export const SFX = {
       S.thump({ t, f0: 180, f1: 100, d: 0.07, peak: 0.4, click: 0 });
     } },
 
-  pipe_hiss: { lvl: -21, len: 1.7, rev: 0.15,
+  pipe_hiss: { lvl: -24, len: 1.7, rev: 0.15,
     fn(S, t) {
       S.noise({ t, a: 0.04, d: 0.5, hold: 0.9, peak: 0.5, f: [['bp', 4200, 0.9], ['hp', 1800]] });
       S.noise({ t, a: 0.05, d: 0.4, hold: 1.0, peak: 0.25, color: 'brown', f: [['lp', 300]] });
       for (let i = 0; i < 26; i++) S.bubble({ t: t + 0.05 + S.r(0, 1.35), f: S.r(250, 900), rise: S.r(1.3, 2), d: S.r(0.03, 0.07), peak: S.r(0.08, 0.25) });
     } },
 
-  chain_rattle: { lvl: -19, v: 2, len: 0.7, rev: 0.15, sr: 'hi',
+  chain_rattle: { lvl: -21, v: 2, len: 0.7, rev: 0.15, sr: 'hi',
     fn(S, t) {
       for (let i = 0; i < 16; i++) {
         const tt = t + Math.pow(i / 16, 1.2) * 0.5 + S.r(0, 0.012);
@@ -909,7 +913,7 @@ export const SFX = {
       S.thump({ t, f0: 160, f1: 90, d: 0.08, peak: 0.3, click: 0 });
     } },
 
-  valve_steam: { lvl: -17, len: 1.2, rev: 0.18,
+  valve_steam: { lvl: -19, len: 1.2, rev: 0.18,
     fn(S, t) {
       S.metal({ t, f: 600, d: 0.12, peak: 0.4, strike: 0.5, n: 4 });
       S.noise({ t: t + 0.03, pts: [[0, 0], [0.02, 0.9], [0.25, 0.6], [1.0, 0.0008, 'e']], f: [['hp', 1500], ['bp', 4500, 0.7]] });
@@ -917,7 +921,7 @@ export const SFX = {
       S.tone({ f: 1850, t: t + 0.05, a: 0.03, d: 0.5, hold: 0.1, peak: 0.06, vib: { rate: 9, depth: 0.01 } });
     } },
 
-  lamp_swing: { lvl: -22, v: 2, len: 0.9, rev: 0.2,
+  lamp_swing: { lvl: -25, v: 2, len: 0.9, rev: 0.2,
     fn(S, t) {
       const r = S.res([[1150, 14, 1], [2550, 16, 0.6], [3900, 12, 0.3]]);
       S.pulses({ t, dur: 0.32, rate: (x) => 90 + 60 * x, amp: (x) => Math.sin(Math.PI * x), peak: 4, to: r });
@@ -954,7 +958,7 @@ export const SFX = {
       S.sparkle({ t: t + 0.05, n: 5, spread: 0.4, fmin: 3000, fmax: 7000, peak: 0.08, pan: 0.6 });
     } },
 
-  referee_whistle: { lvl: -16, len: 0.75, rev: 0.15, sr: 'hi', jit: 0.01,
+  referee_whistle: { lvl: -18, len: 0.75, rev: 0.15, sr: 'hi', jit: 0.01,
     fn(S, t) {
       const D = 0.55;
       const trem = S.gain(0.8);
@@ -970,7 +974,7 @@ export const SFX = {
       S.noise({ t, pts: [[0, 0], [0.02, 0.18], [D - 0.05, 0.15], [D, 0]], f: [['bp', 3050, 3]] });
     } },
 
-  jukebox: { lvl: -18, len: 1.0, rev: 0.12, jit: 0,
+  jukebox: { lvl: -20, len: 1.0, rev: 0.12, jit: 0,
     fn(S, t) {
       const g = S.gain(0);
       envPoints(g.gain, t, [[0, 0], [0.01, 0.7], [0.12, 0.7], [0.14, 0.1], [0.16, 0.7], [0.3, 0.6], [0.34, 0]]);
@@ -986,26 +990,26 @@ export const SFX = {
       S.tone({ type: 'sawtooth', f: 40, f1: 120, ft: 0.4, t: t + 0.5, a: 0.05, d: 0.3, hold: 0.1, peak: 0.08, to: S.lp(600) });
     } },
 
-  glass_clink: { lvl: -21, v: 2, len: 0.8, rev: 0.2, sr: 'hi',
+  glass_clink: { lvl: -23, v: 2, len: 0.8, rev: 0.2, sr: 'hi',
     fn(S, t) {
       const f = S.r(2900, 3300);
       S.modal({ t, f, ratios: [1, 2.38, 4.1, 6.2], amps: [1, 0.4, 0.15, 0.06], decays: [0.6, 0.3, 0.15, 0.08], peak: 0.7 });
       S.modal({ t: t + 0.002, f: f * 1.06, ratios: [1, 2.4], amps: [0.6, 0.2], decays: [0.5, 0.2], peak: 0.5 });
     } },
 
-  bubbles: { lvl: -24, v: 2, len: 1.0, rev: 0.15,
+  bubbles: { lvl: -25.5, v: 2, len: 1.0, rev: 0.15,
     fn(S, t) {
       S.bubbles({ t, n: 14, spread: 0.8, fmin: 300, fmax: 1100, peak: 0.5, d: 0.07 });
       S.noise({ t, a: 0.1, d: 0.5, hold: 0.2, peak: 0.08, color: 'brown', f: [['lp', 400]] });
     } },
 
-  taunt: { lvl: -17, len: 1.2, rev: 0.15, jit: 0,
+  taunt: { lvl: -19, len: 1.2, rev: 0.15, jit: 0,
     fn(S, t) {
       mute(S, 67, t, 0.2, 0.95, S.out, { wah: 1500 });
       bone(S, 62, t + 0.27, 0.55, 0.85, S.out, { wah: 6, fall: 2 });
     } },
 
-  snail_pickup: { lvl: -19, len: 0.9, rev: 0.2, sr: 'hi', jit: 0.01,
+  snail_pickup: { lvl: -21, len: 0.9, rev: 0.2, sr: 'hi', jit: 0.01,
     fn(S, t) {
       S.modal({ t, f: 2794, ratios: [1, 2.32, 3.71], amps: [1, 0.4, 0.2], decays: [0.35, 0.15, 0.08], peak: 0.7 });
       S.modal({ t: t + 0.07, f: 3729, ratios: [1, 2.32], amps: [1, 0.3], decays: [0.4, 0.12], peak: 0.6 });

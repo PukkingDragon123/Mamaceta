@@ -13,7 +13,7 @@ function roll(S, t, dur, v0 = 0.15, v1 = 0.6, rate = 0.045) {
 }
 
 export const STINGERS = {
-  stinger_round: { lvl: -12, len: 2.6, rev: 0.22,
+  stinger_round: { lvl: -14, len: 2.6, rev: 0.22,
     fn(S, t) {
       roll(S, t, 0.36, 0.12, 0.5, 0.04);
       const h = t + 0.4;
@@ -25,7 +25,7 @@ export const STINGERS = {
       D(S, 'tom_lo', h + 1.2, 0.5);
     } },
 
-  stinger_fight: { lvl: -11, len: 1.9, rev: 0.22,
+  stinger_fight: { lvl: -13, len: 1.9, rev: 0.22,
     fn(S, t) {
       D(S, 'kick_hard', t, 1); D(S, 'snare_hard', t, 0.9); D(S, 'boom', t, 0.8);
       for (const m of [65, 69, 72, 77]) brass(S, m, t, 0.16, 1, S.out, { scoop: 120, noVib: 1, bright: 1.2 });
@@ -34,7 +34,7 @@ export const STINGERS = {
       for (const m of [67, 71, 74, 79]) brass(S, m, h, 0.55, 1, S.out, { scoop: 90, fall: 180, bright: 1.2, vibRate: 6.5 });
     } },
 
-  stinger_ko: { lvl: -12, len: 4.6, rev: 0.25,
+  stinger_ko: { lvl: -14, len: 4.6, rev: 0.25,
     fn(S, t) {
       D(S, 'boom', t, 1); D(S, 'timpani', t, 0.9); D(S, 'kick_hard', t, 1);
       // gong: inharmonic partials, upper ones "bloom" after the strike
@@ -49,7 +49,7 @@ export const STINGERS = {
       S.noise({ t, a: 0.001, d: 0.08, peak: 0.6, f: [['lp', 1200]] });
     } },
 
-  stinger_victory: { lvl: -12, len: 3.8, rev: 0.22,
+  stinger_victory: { lvl: -14, len: 3.8, rev: 0.22,
     fn(S, t) {
       const e = 0.13; // eighth note
       // trumpet 1 + trumpet 2 a diatonic third below (D major)
@@ -69,7 +69,7 @@ export const STINGERS = {
       D(S, 'kick_hard', t + 12 * e, 1); D(S, 'crash', t + 12 * e, 0.8); D(S, 'timpani', t + 12 * e, 0.7);
     } },
 
-  stinger_perfect: { lvl: -13, len: 2.6, rev: 0.3,
+  stinger_perfect: { lvl: -15, len: 2.6, rev: 0.3,
     fn(S, t) {
       [84, 88, 91, 96, 100, 103].forEach((m, i) => playSample(S, 'vibes', m, t + i * 0.055, null, 0.65, S.out));
       pad(S, [60, 64, 67, 71, 74], t + 0.1, 1.2, 0.8, S.out, { a: 0.25, r: 1.0, cut: 3200 });
@@ -78,7 +78,7 @@ export const STINGERS = {
       D(S, 'crash', t + 0.35, 0.35);
     } },
 
-  stinger_timeup: { lvl: -12, len: 2.6, rev: 0.22,
+  stinger_timeup: { lvl: -14, len: 2.6, rev: 0.22,
     fn(S, t) {
       bell(S, 84, t, 1, 0.5, S.out, { len: 0.7 });
       bell(S, 84, t + 0.16, 1, 0.4, S.out, { len: 0.7 });
@@ -89,7 +89,7 @@ export const STINGERS = {
       D(S, 'crash', t + 0.85, 0.5);
     } },
 
-  stinger_demon: { lvl: -12, len: 3.4, rev: 0.35,
+  stinger_demon: { lvl: -14, len: 3.4, rev: 0.35,
     fn(S, t) {
       D(S, 'boom', t, 1); D(S, 'kick_hard', t, 0.8);
       for (const m of [36, 37, 42, 43, 48]) bone(S, m, t, 1.4, 0.8, S.out, { vibRate: 7, vib: 0.02 });
@@ -99,7 +99,7 @@ export const STINGERS = {
       S.tone({ type: 'sawtooth', f: 65.4, f1: 61.7, ft: 2.5, t, a: 0.05, d: 2.6, peak: 0.2, to: S.lp(300) });
     } },
 
-  stinger_ult: { lvl: -11, len: 2.3, rev: 0.25,
+  stinger_ult: { lvl: -13, len: 2.3, rev: 0.25,
     fn(S, t) {
       D(S, 'crash', t, 0.9); D(S, 'kick_hard', t, 1); D(S, 'boom', t, 0.7);
       S.noise({ t, a: 0.002, d: 0.4, peak: 0.4, f: [['bp', 2500, 3, 9000, 0.15], ['hp', 2000]] });
@@ -111,7 +111,7 @@ export const STINGERS = {
       S.tone({ f: 110, f1: 40, ft: 0.8, t, a: 0.01, d: 1.0, peak: 0.6, to: S.drive(2) });
     } },
 
-  stinger_purchase: { lvl: -14, len: 1.7, rev: 0.2,
+  stinger_purchase: { lvl: -16, len: 1.7, rev: 0.2,
     fn(S, t) {
       const e = 0.085;
       [[79, 0], [81, 1], [83, 2], [86, 3], [91, 5]].forEach(([m, s]) => playSample(S, 'marimba', m, t + s * e, null, s === 5 ? 1 : 0.75, S.out));
@@ -121,7 +121,7 @@ export const STINGERS = {
       playSample(S, 'ubass', 43, t + 5 * e, 0.3, 0.6, S.out);
     } },
 
-  stinger_lose: { lvl: -13, len: 3.4, rev: 0.2,
+  stinger_lose: { lvl: -17, len: 3.4, rev: 0.2,
     fn(S, t) {
       const n = [[58, 0, 0.36], [57, 0.45, 0.36], [56, 0.9, 0.36]];
       for (const [m, s, l] of n) bone(S, m, t + s, l, 0.85, S.out, { vib: 0.004 });
