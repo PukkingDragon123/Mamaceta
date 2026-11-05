@@ -56,8 +56,10 @@ console.warn(`[perf] construct ${isBar ? 'bar' : stageId}: ${tBuild.toFixed(1)} 
 if (isBar) {
   const c = stage.cams[q.get('cam') || 'overview'] || stage.cams.overview;
   cam = { x: num('x', c.x), y: num('y', c.y), zoom: num('zoom', c.zoom) };
-  if (q.has('door')) { stage.setDoor(0, num('door', 0)); stage.setDoor(1, num('door', 0)); }
-  if (q.has('secret')) stage.setSecretDoor(num('secret', 1));
+  if (q.has('door')) { stage.setDoor(0, num('door', 0), true); stage.setDoor(1, num('door', 0), true); }
+  if (q.has('secret')) stage.setSecretDoor(num('secret', 1), true);
+  if (q.has('mood')) stage.moltMood?.(q.get('mood'));
+  if (q.has('talk')) stage.moltTalk?.(true);
   if (q.has('votes')) { stage.doorVotes?.(0, 2); stage.doorVotes?.(1, 1); }
 }
 stage.setDark?.(dark);

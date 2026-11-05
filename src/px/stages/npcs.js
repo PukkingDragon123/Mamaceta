@@ -450,6 +450,23 @@ export class Patron extends NPC {
   }
 }
 
+// painter wrapper that scales local coordinates and radii (for bigger NPCs)
+function scaled(P, k) {
+  const S = (p) => [p[0] * k, p[1] * k];
+  return {
+    b: P.b, k, base: P,
+    X: (p) => P.X(S(p)), Y: (p) => P.Y(S(p)),
+    cap: (a, b, r0, r1, m, z, g) => P.cap(S(a), S(b), r0 * k, r1 * k, m, z, g),
+    ell: (c, rx, ry, ang, m, z, g) => P.ell(S(c), rx * k, ry * k, ang, m, z, g),
+    poly: (pts, m, z, g, o) => P.poly(pts.map(S), m, z, g, o),
+    stroke: (pts, w0, w1, m, z, g) => P.stroke(pts.map(S), w0 * k, w1 * k, m, z, g),
+    line: (a, b, c, z, g) => P.line(S(a), S(b), c, z, g),
+    px: (p, c, z, g) => P.px(S(p), c, z, g),
+    rect: (p, w, h, c, z, g) => P.rect(S(p), w, h, c, z, g),
+    paint: (p, c, g) => P.paint(S(p), c, g),
+    dot: (p, r, c, g) => P.dot(S(p), r * k, c, g),
+  };
+}
 // =========================================================================== MADAM MOLT
 const MOLT = {
   shell: M(R('#ee7a5c', { spread: 0.12 }), { tex: (t, u, v, x, y) => (y % 4 === 0 ? (t > 0 ? t - 1 : 0) : t) }), shellB: M(R('#d0604a', { spread: 0.11 })), belly: M(R('#ffc8a8', { spread: 0.09 })),
@@ -457,7 +474,8 @@ const MOLT = {
   turban: M(R('#6a2ab0', { spread: 0.12 }), { tex: (t, u, v, x, y) => (((x + y * 2) >> 1) % 4 === 0 ? Math.max(0, t - 1) : t) }), gem: M(R('#2fe0a0', { spread: 0.1 }), { bias: 0.3 }),
   gold: M(R('#f0c33c', { spread: 0.12 })), pearl: M(R('#fff4e8', { spread: 0.06 }), { bias: 0.2 }), eye: M(R('#fff4e8', { spread: 0.08 }), { bias: 0.3 }), feather: M(R('#ff5aa0', { spread: 0.1 })),
 };
-function drawMolt(P, o) {
+function drawMolt(P0, o) {
+  const K = o.k || 1, P = scaled(P0, K), SK = (p) => [p[0] * K, p[1] * K];
   const bob = o.bob || 0;
   // tail fan + lower body hidden behind the counter mostly; skirt
   P.poly([[-12, 0], [12, 0], [10, 26 + bob], [-10, 26 + bob]], MOLT.dress, 6, G.clothB);
@@ -487,18 +505,18 @@ function drawMolt(P, o) {
   P.stroke(curl, 1.4, 0.8, MOLT.shellB, 23, G.ant);
   // eyes on stalks with round gold spectacles
   const lid = o.laugh ? 1 : (o.lid ?? 0.22), look = o.look || [1, 0], slant = o.slant ?? 0.2;
-  const e1 = eyeStalk(P, H(0, 5.4), 0.15, 3.4, 2.6, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant, z: 27, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
-  const e2 = eyeStalk(P, H(3.6, 4.8), 0.45, 3.6, 2.9, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant, z: 28, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
-  for (const e of [e1, e2]) { for (let a = 0; a < TAU; a += 0.35) P.px([e[0] + Math.cos(a) * 3.6, e[1] + Math.sin(a) * 3.6], hexU('#f0c33c'), 29, G.faceAcc); }
-  P.line(e1, e2, hexU('#f0c33c'), 29, G.faceAcc);
-  if (o.arc) for (const e of [e1, e2]) for (let i = -2; i <= 2; i++) P.paint([e[0] + i, e[1] + (Math.abs(i) === 2 ? -1 : 0)], INK, G.eyes);
+  const e1 = eyeStalk(P0, SK(H(0, 5.4)), 0.15, 3.4 * K, 2.6 * K, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant, z: 27, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
+  const e2 = eyeStalk(P0, SK(H(3.6, 4.8)), 0.45, 3.6 * K, 2.9 * K, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant, z: 28, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
+  for (const e of [e1, e2]) { for (let a = 0; a < TAU; a += 0.28) P0.px([e[0] + Math.cos(a) * 3.6 * K, e[1] + Math.sin(a) * 3.6 * K], hexU('#f0c33c'), 29, G.faceAcc); }
+  P0.line([e1[0] + 3.4 * K, e1[1]], [e2[0] - 3.4 * K, e2[1]], hexU('#f0c33c'), 29, G.faceAcc);
+  if (o.arc) for (const e of [e1, e2]) for (let i = -2; i <= 2; i++) P0.paint([e[0] + i, e[1] + (Math.abs(i) === 2 ? -1 : 0)], INK, G.eyes);
   // turban with gem + feather
   P.ell(H(-1, 11), 8.5, 5.4, -0.1, MOLT.turban, 30, G.hat);
   P.cap(H(-8, 9), H(6, 13), 2.2, 2, { ...MOLT.turban, bias: 0.25 }, 30.2, G.hat);
   P.ell(H(4, 11.5), 2, 2.2, 0, MOLT.gem, 30.5, G.hat); P.px(H(3.5, 12.5), hexU('#ffffff'), 30.6, G.hat);
   P.stroke([H(2, 14), H(-1, 20), H(-6, 23)], 2.6, 1, MOLT.feather, 29.8, G.hat);
   // lipstick smile
-  mouth(P, H(7, -5), o.talk ? (o.mouth === 'grin' || o.laugh ? 'shout' : 'eat') : (o.mouth || (o.laugh ? 'grin' : 'smug')), o.talk ? 3 : 3, { ink: hexU('#a82a4a'), tongue: hexU('#d85a7a') });
+  mouth(P0, SK(H(7, -5)), o.talk ? (o.mouth === 'grin' || o.laugh ? 'shout' : 'eat') : (o.mouth || (o.laugh ? 'grin' : 'smug')), Math.round(3 * K), { ink: hexU('#a82a4a'), tongue: hexU('#d85a7a') });
   // front arm
   const sh = [6, 45 + bob];
   if (o.arm === 'beckon') { const w = o.w || 0; P.cap(sh, [12, 42 + bob], 2.6, 2.3, MOLT.shell, 40, G.armF); P.cap([12, 42 + bob], [15 + w, 50 + bob], 2.2, 2, MOLT.shell, 40.1, G.armF); P.ell([15 + w, 52 + bob], 2.4, 2.2, 0, MOLT.shell, 40.2, G.armF); P.px([16 + w, 52 + bob], hexU('#2fe0a0'), 40.4, G.acc); }
@@ -514,7 +532,8 @@ export class MadamMolt extends NPC {
   constructor(x = 0, y = 0, o = {}) {
     super();
     this.x = x; this.y = y; this.face = o.face ?? -1;
-    const mk = (opts) => frame(56, 92, 26, 88, (P) => drawMolt(P, opts), { fog: o.fog, fogAmt: o.fogAmt ?? 0 });
+    const k = o.scale ?? 1.35;
+    const mk = (opts) => frame(Math.ceil(56 * k), Math.ceil(92 * k), Math.round(26 * k), Math.round(88 * k), (P) => drawMolt(P, { ...opts, k }), { fog: o.fog, fogAmt: o.fogAmt ?? 0 });
     this.F = {};
     for (const k in MOLT_MOODS) {
       const m = MOLT_MOODS[k];

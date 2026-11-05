@@ -35,7 +35,9 @@ export class MenuFighter2D {
     const st = STANCE[this.char] || STANCE.jim;
     const t = this.t;
     const B = stancePose(st, t, 1);
-    const S = (p) => scale(p, st.s);
+    // seated spots (stools, booth benches): the spot y is the seat, legs hang down to the floor
+    const sit = (p) => (this.seat && this.react !== 'victory' ? Object.assign(p, { hip: [-0.04, 0.12], fF: [0.38, -0.36], fB: [0.26, -0.38], knF: 1, knB: 1, lean: Math.min(p.lean ?? 0.1, 0.2) }) : p);
+    const S = (p) => scale(sit(p), st.s);
     // reactions override activities for a moment
     if (this.react) {
       const k = this.reactT;
@@ -66,7 +68,6 @@ export class MenuFighter2D {
         const toMouth = cyc > 1.0 && cyc < 1.6;
         const chew = cyc > 1.6 && cyc < 2.8 ? abs(sin(t * 12)) : 0;
         const p = over(B, toMouth ? { hF: [0.45, 1.4], head: -0.2, face: 'eat' } : { hF: [0.55, 0.85], hB: [0.4, 0.82], face: chew > 0 ? 'eat' : 'grin', belly: chew * 0.04 });
-        if (this.seat) Object.assign(p, { hip: [0, 0.58], fF: [0.32, 0.12], fB: [0.18, 0.12], knF: 1, knB: 1 });
         return S(p);
       }
       case 'arcade': {

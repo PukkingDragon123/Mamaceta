@@ -40,7 +40,7 @@ export class BarScene {
       mimi: { x: 10.5, y: 0.52, face: 1, seat: true },
       select: { jim: { x: -2.1, y: 0, face: 1 }, brutus: { x: -0.7, y: 0, face: 1 }, bobby: { x: 0.7, y: 0, face: -1 }, mimi: { x: 2.1, y: 0, face: -1 } },
       versus: [{ x: -1.7, y: 0, face: 1 }, { x: 1.7, y: 0, face: -1 }],
-      molt: { x: 37.8, y: 0.62, face: -1 },
+      molt: { x: 37.8, y: 0.3, face: -1 },
       pedestal: { x: 34.0, y: 0.3, face: 1 },
       doors: [{ x: 22.7, y: 1.8 }, { x: 26.7, y: 1.8 }],
       secret: { x: 29.6, y: 1.5 },
@@ -325,7 +325,7 @@ export class BarScene {
     const SEAMC = C('#0e0806'), M1 = C('#1a1a1e'), M2 = C('#202026'), M3 = C('#0e0e12'), FOGF = C('#0a0605'), DK = C('#050303');
     const rugs = [
       { cx: -0.6 * PPU, cv: 1222, rw: 120, rv: 120, pal: [C('#3a1a12'), C('#c8a040'), C('#2a3a6a'), C('#d8c8a0'), C('#7a2218')] },
-      { cx: 11.0 * PPU, cv: 1200, rw: 110, rv: 100, pal: [C('#1a2a3a'), C('#c8a040'), C('#7a2a2a'), C('#d8c8a0'), C('#2a5a6a')] },
+      { cx: 11.0 * PPU, cv: 1200, rw: 110, rv: 100, pal: [C('#1a2a3a'), C('#a88a3a'), C('#5a2a2a'), C('#b8a888'), C('#2a4a56')], calm: true },
       { cx: 37.2 * PPU, cv: 1222, rw: 240, rv: 140, pal: [C('#2a1030'), C('#c8a040'), C('#5a2048'), C('#a8885a'), C('#3e1a4a')], calm: true },
     ];
     const rugAt = (u, v) => {
@@ -612,8 +612,8 @@ export class BarScene {
   }
 
   // ------------------------------------------------------------------ API
-  setDoor(i, open) { if (i === 0 || i === 1) this.doorTarget[i] = clamp(open, 0, 1); }
-  setSecretDoor(open) { this.secretTarget = clamp(open, 0, 1); }
+  setDoor(i, open, instant = false) { if (i === 0 || i === 1) { this.doorTarget[i] = clamp(open, 0, 1); if (instant) this.doorOpen[i] = this.doorTarget[i]; } }
+  setSecretDoor(open, instant = false) { this.secretTarget = clamp(open, 0, 1); if (instant) this.secret = this.secretTarget; }
   doorVotes(i, n) { if (i === 0 || i === 1) this.votes[i] = Math.max(0, n | 0); }
   setDark(a) { this.dark = clamp(a || 0, 0, 1); }
 
@@ -729,7 +729,7 @@ export class BarScene {
     this.drawBag(d, t);
     // shop darkness while the secret door is shut
     const shade = 1 - this.secret;
-    if (shade > 0.02) { const x0 = d.bx(31.5), x1 = d.bx(47); if (x1 > 0 && x0 < d.vw) d.dither('#040206', 0.55 + shade * 0.4, Math.max(0, x0), 0, Math.min(d.vw, x1) - Math.max(0, x0), d.vh); }
+    if (shade > 0.02) { const x0 = d.bx(31.5), x1 = d.bx(47); if (x1 > 0 && x0 < d.vw) d.dither('#040206', Math.min(0.94, shade * 1.2), Math.max(0, x0), 0, Math.min(d.vw, x1) - Math.max(0, x0), d.vh); }
     this.bub.draw(d, t, 0.99, 1.01);
     this.fx.draw(d, t);
   }
