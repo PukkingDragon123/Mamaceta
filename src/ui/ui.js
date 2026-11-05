@@ -159,6 +159,7 @@ export class UI {
     if (o.alpha !== undefined) g.globalAlpha = 1;
   }
   icon(name, x, y, o = {}) { this.img(getIcon(name), x, y, o); }
+  iconImg(name) { return getIcon(name); }
   panel(x, y, w, h, o = {}) { const c = woodPanel(Math.round(w), Math.round(h), o); this.img(c, x, y, o); return c; }
   metal(x, y, w, h, o = {}) { this.img(metalPlate(Math.round(w), Math.round(h), o), x, y, o); }
   rope(x0, y0, x1, y1, phase = 0) { drawRope(this.g, x0, y0, x1, y1, phase); }

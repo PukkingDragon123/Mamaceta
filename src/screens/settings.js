@@ -1,5 +1,5 @@
 // Settings: audio, video, gameplay, controls (rebinding) and profile.
-import { ensureLocker, goMainMenu } from './flow.js';
+import { ensureLobby, goMainMenu } from './flow.js';
 import { P, PLAYER_COLORS } from '../ui/palette.js';
 import { Sound } from '../core/sound.js';
 import { Save } from '../core/save.js';
@@ -13,9 +13,8 @@ export class SettingsScreen {
   constructor(back) { this.backTo = back; }
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.L.setCam([-8.2, 2.2, 0.5], [-9.6, 2.0, -5.5], 44, 1.5);
+    this.L = ensureLobby();
+    this.L.setCam('overview', 1.5, { drift: 0.02 });
     this.tab = 0; this.row = 0; this.t = 0; this.capture = null; this.confirmReset = 0;
   }
   exit() { this.game.input.textHandler = null; this.game.input.captureHandler = null; Save.save(); this.game.applySettings(); }
@@ -23,7 +22,7 @@ export class SettingsScreen {
     const s = Save.settings;
     const g = this.game;
     const slider = (label, key, step = 0.1) => ({ label, kind: 'slider', get: () => s[key], set: (v) => { s[key] = clamp(Math.round(v * 100) / 100, 0, 1); Sound.setVolumes({ master: s.master, music: s.music, sfx: s.sfx }); Save.markDirty(); }, step });
-    const choice = (label, key, opts, names) => ({ label, kind: 'choice', opts, names, get: () => s[key], set: (v) => { s[key] = v; Save.markDirty(); if (key === 'quality') g.renderer.setQuality(v); } });
+    const choice = (label, key, opts, names) => ({ label, kind: 'choice', opts, names, get: () => s[key], set: (v) => { s[key] = v; Save.markDirty(); } });
     const toggle = (label, key) => ({ label, kind: 'toggle', get: () => !!s[key], set: (v) => { s[key] = v; Save.markDirty(); } });
     switch (TABS[this.tab]) {
       case 'AUDIO': return [slider('MASTER VOLUME', 'master'), slider('MUSIC', 'music'), slider('SOUND FX', 'sfx')];
@@ -71,6 +70,7 @@ export class SettingsScreen {
       };
     }
   }
+  render(d) { this.L.render(d, { dim: 0.3 }); }
   update(dt, active) {
     this.t += dt; this.confirmReset = Math.max(0, this.confirmReset - dt);
     this.L.update(dt);

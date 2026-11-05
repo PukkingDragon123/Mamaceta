@@ -1,8 +1,11 @@
 // CPU opponent: reads the simulation state and produces controller input bitmasks.
 import { BTN } from '../core/input.js';
-import { CHARS, PHYS } from './data.js';
+import { CHARS, PHYS, ULT_CINE } from './data.js';
 
-const { LEFT, RIGHT, UP, DOWN, LIGHT, HEAVY, BLOCK } = BTN;
+const { LEFT, RIGHT, UP, DOWN, LIGHT, HEAVY, BLOCK, SKILL1, SKILL2, SKILL3 } = BTN;
+const SKB = [SKILL1, SKILL2, SKILL3];
+// how a CPU likes to use each skill: range [min,max] and situation
+const SKILL_USE = { mine: [0, 3.5], riptide: [1.2, 4.5], habanero: [0, 9], eyes: [0, 3.2], coral: [2.5, 9], hook: [1.8, 5.5], loteria: [3, 12], hermit: [0, 3.5], decoy: [0, 3], eel: [0, 1.5], mariachi: [0, 2.6], pinata: [2, 6] };
 const LEVELS = [
   null,
   { react: 26, aggro: 0.35, block: 0.25, perfect: 0.0, combo: 0.2, special: 0.25, qte: 4, anti: 0.15, throw: 0.1, mistake: 0.25 },
@@ -37,6 +40,24 @@ export class AI {
       return this.qteT % rate === 0 ? want : 0;
     }
     if (s.phase === 'intro') return this.t % 40 === 0 ? LIGHT : 0;
+    // skill draft: browse a little, then pick
+    if (s.phase === 'pick' && s.pick) {
+      const pk = s.pick;
+      if (pk.done[this.i] || !pk.who[this.i]) return 0;
+      if (!this.pickAt) this.pickAt = this.t + 50 + Math.floor(this.r() * 70);
+      if (this.t < this.pickAt) return (this.t % 23 === 0 && this.r() < 0.5) ? RIGHT : 0;
+      this.pickAt = 0;
+      return this.t % 2 ? LIGHT : 0;
+    }
+    if (s.phase === 'ucine' && s.ucine) {
+      const c = s.ucine;
+      this.qteT++;
+      if (c.d === this.i) return this.qteT % Math.max(2, Math.round(30 / this.L.qte)) === 0 ? BLOCK : 0;
+      // attacker: hit the prompt with level-based accuracy
+      const steps = ULT_CINE.steps;
+      for (let k = 0; k < steps.length; k++) if (!c.res[k] && c.t === steps[k] - 3 + Math.floor(this.r() * 4)) return this.r() < 0.35 + this.L.qte * 0.045 ? [LIGHT, HEAVY, BLOCK][c.btns[k]] : [LIGHT, HEAVY, BLOCK][(c.btns[k] + 1) % 3];
+      return 0;
+    }
     if (s.phase !== 'fight') { this.plan.length = 0; return 0; }
     if (f.st === 'dizzy' || f.st === 'bubbled') return this.t % 3 === 0 ? (LIGHT | HEAVY) : 0;
     if (this.plan.length) return this.plan.shift();
@@ -76,6 +97,20 @@ export class AI {
     if (actionable && o.st === 'air' && o.vy < 0.05 && dist < 2.2 && o.y > 0.6 && this.r() < L.anti) { this.press([DOWN, DOWN | HEAVY, 0]); return DOWN; }
     // ultimate
     if (actionable && f.meter >= PHYS.METER_MAX && dist < (f.char === 'brutus' ? 6 : f.char === 'bobby' || f.char === 'mimi' ? 3 : 3.2) && this.r() < 0.05) { this.press([LIGHT | HEAVY, LIGHT | HEAVY, 0]); return 0; }
+    // skills
+    if ((actionable || inAir) && f.sk && f.sk.length && this.r() < 0.03 + this.L.special * 0.04) {
+      for (let j = 0; j < f.sk.length; j++) {
+        const k = f.sk[j];
+        if (k.cd > 0) continue;
+        const [lo, hi] = SKILL_USE[k.id] || [0, 4];
+        if (dist < lo || dist > hi) continue;
+        if (inAir && !['riptide', 'hook', 'decoy', 'eel'].includes(k.id)) continue;
+        if ((k.id === 'hermit' || k.id === 'eyes') && !oThreat && this.r() < 0.7) continue;
+        if (k.id === 'loteria' && this.r() < 0.5) continue;
+        this.press([SKB[j], 0]);
+        return SKB[j];
+      }
+    }
     // molt when shell is low and safe
     if (actionable && f.shell < f.shellMax * 0.35 && f.moltCd <= 0 && dist > 4.5 && this.r() < 0.04) { this.press(new Array(190).fill(BLOCK | HEAVY)); return BLOCK; }
     // brutus snack

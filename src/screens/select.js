@@ -1,9 +1,7 @@
-// Character select in the locker room: all four fighters doing their activities, 16-second timer,
-// per-player cursors + live customization, then a versus face-off with banter.
-import * as THREE from 'three';
-import { ensureLocker, lockerFighters, rebuildFighter, goMainMenu, goMapVote, startMatch } from './flow.js';
-import { LOCKER_SLOTS } from '../render/stages/lockerroom.js';
-import { MenuFighter } from '../render/menuFighter.js';
+// Character select in the bar: all four fighters line up, 16-second timer, per-player cursors +
+// live customization, then a cinematic versus face-off with banter.
+import { ensureLobby, lobbyFighters, rebuildFighter, goMainMenu, goMapVote, startMatch } from './flow.js';
+import { MenuFighter2D } from '../px/menuFighter.js';
 import { P, PLAYER_COLORS, RARITY } from '../ui/palette.js';
 import { pips, hintBar, rarityTag } from '../ui/widgets.js';
 import { Save, CHARS } from '../core/save.js';
@@ -29,12 +27,11 @@ export class CharSelectScreen {
 
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.F = lockerFighters(g);
-    for (const c of CHARS) { this.F[c].setVisible(true); this.F[c].setSlot(LOCKER_SLOTS.select[c]); this.F[c].react = null; }
-    this.L.molt.group.visible = false; this.L.moltOpenTarget = 0;
-    this.L.setCam([-2.75, 2.7, 6.9], [-2.75, 1.35, -3.0], 46, 1.8);
+    this.L = ensureLobby();
+    this.F = lobbyFighters();
+    this.L.selectAll();
+    for (const c of CHARS) this.F[c].react = null;
+    this.L.setCam('select', 1.2, { drift: 0.02 });
     this.time = 16; this.t = 0;
     const local = this.mode === 'local';
     const mkP = (i) => ({ cursor: i === 0 ? ORDER.indexOf(Save.data.mainFighter) : (ORDER.indexOf(Save.data.mainFighter) + 2) % 4, stage: 'pick', row: 0, cos: null, ready: false, cpu: false, remote: false, bob: 0 });
@@ -53,9 +50,10 @@ export class CharSelectScreen {
     this.tickPrev = 16;
   }
   exit() {
-    if (this.vsFighters) for (const f of this.vsFighters) f.dispose();
+    if (this.vsFighters) this.L.extra = this.L.extra.filter((e) => !this.vsFighters.includes(e));
     this.game.input.mode = 'solo';
   }
+  render(d) { this.d = d; this.L.render(d); }
 
   who(i) {
     if (this.mode === 'local') return i;
@@ -102,7 +100,7 @@ export class CharSelectScreen {
     if (slot === 'skin' || slot === 'gloves') {
       // only one of the players may change the shared locker model; mirror picks get their own model at versus time
       const other = this.p[1 - i];
-      if (!(other.stage !== 'pick' && ORDER[other.cursor] === c)) { const f = rebuildFighter(this.game, c, p.cos); this.F = this.L.fighters; f.doReact('locked'); }
+      if (!(other.stage !== 'pick' && ORDER[other.cursor] === c)) { const f = rebuildFighter(this.game, c, p.cos); this.F = this.L.F; f.setSpot(this.L.spots.select[c]); f.setActivity('guard'); f.doReact('locked'); }
     }
     this.send();
   }
@@ -138,10 +136,14 @@ export class CharSelectScreen {
   update(dt, active) {
     this.t += dt;
     this.L.update(dt);
-    const look = this.L.camera.position;
-    for (const c of CHARS) if (this.F[c].visible) this.F[c].update(dt, { look });
-    const jim = this.F.jim;
-    if (jim.punch) { this.L.punchBag(jim.punch === 2 ? 1.6 : 0.8); Sound.sfx(jim.punch === 2 ? 'hit_medium' : 'hit_light', { vol: 0.35 }); jim.punch = 0; }
+    // camera leans toward whoever P1 is hovering
+    if (this.phase === 'select' && !this.camLean) this.camLean = 0;
+    if (this.phase === 'select') {
+      const sp = this.L.spots.select[ORDER[this.p[0].cursor]];
+      const base = this.L.camOf('select');
+      const tx = base.x + (sp.x - base.x) * 0.25;
+      if (Math.abs((this.lastLean ?? 99) - tx) > 0.01) { this.lastLean = tx; this.L.setCam({ x: tx, y: base.y, zoom: base.zoom * 1.04 }, 0.6, { drift: 0.01 }); }
+    }
     if (this.speech) { this.speech.t += dt; if (this.speech.t > 3) this.speech = null; }
     if (this.phase === 'versus') { this.updateVersus(dt, active); return; }
     // timer
@@ -209,27 +211,30 @@ export class CharSelectScreen {
   fighterAtMouse(ui) {
     let best = -1, bd = 40;
     ORDER.forEach((c, i) => {
-      const p = this.project(this.F[c].rig.root.position.clone().add(new THREE.Vector3(0, 0.9, 0)), ui);
+      const f = this.F[c];
+      const p = this.project(f.x, f.y + 0.9, ui);
       const d = Math.hypot(p.x - ui.mouse.x, p.y - ui.mouse.y);
       if (d < bd) { bd = d; best = i; }
     });
     return best;
   }
-  project(v, ui) { const p = v.clone().project(this.camera); return { x: Math.round((p.x * 0.5 + 0.5) * ui.w), y: Math.round((1 - (p.y * 0.5 + 0.5)) * ui.h) }; }
+  project(x, y, ui) { if (!this.d) return { x: 0, y: 0 }; const p = this.d.toUI(x, y, ui); return { x: Math.round(p.x), y: Math.round(p.y) }; }
 
   // ---------------------------------------------------------------- versus sequence
   beginVersus(picks) {
     if (this.phase === 'versus') return;
     this.phase = 'versus';
     this.picks = picks;
-    for (const c of CHARS) this.F[c].setVisible(false);
+    for (const c of CHARS) this.F[c].visible = false;
+    const vs = this.L.spots.versus;
     this.vsFighters = picks.map((pk, i) => {
-      const mf = new MenuFighter(this.L.scene, pk.char, pk.cos, this.L.particles);
-      mf.setSlot({ x: -3.3 + (i === 0 ? -1.1 : 1.1), z: -1.6, face: i === 0 ? 1 : -1 });
+      const mf = new MenuFighter2D(pk.char, pk.cos);
+      mf.setSpot(vs[i]); mf.setActivity('guard');
       mf.doReact('locked');
       return mf;
     });
-    this.L.setCam([-3.3, 1.75, 4.6], [-3.3, 1.15, -1.6], 38, 2.2);
+    this.L.extra.push(...this.vsFighters);
+    this.L.setCam('versus', 0.9, { drift: 0.05 });
     const key = picks[0].char + '|' + picks[1].char;
     const lines = VERSUS_LINES[key]?.[0] || [line(picks[0].char, 'intro'), line(picks[1].char, 'intro')];
     this.vs = { t: 0, lines, step: -1, stepT: 0 };
@@ -238,10 +243,11 @@ export class CharSelectScreen {
   updateVersus(dt, active) {
     const v = this.vs;
     v.t += dt; v.stepT += dt;
-    for (const f of this.vsFighters) f.update(dt, { look: this.L.camera.position, fixedActivity: true });
-    if (v.step === -1 && v.t > 0.6) { v.step = 0; v.stepT = 0; Sound.voice(this.picks[0].char, v.lines[0]); this.vsFighters[0].doReact('wave'); }
-    if (v.step === 0 && v.stepT > 2.2) { v.step = 1; v.stepT = 0; Sound.voice(this.picks[1].char, v.lines[1]); this.vsFighters[1].doReact('wave'); }
-    if (v.step === 1 && v.stepT > 2.2) { v.step = 2; v.stepT = 0; this.vsFighters.forEach((f) => f.doReact('locked')); Sound.sfx('ui_lock_in'); }
+    // cinematic: close-up on each speaker, then pull back for the stare-down
+    const closeUp = (i) => { const h = this.vsFighters[i].headPos(); this.L.setCam({ x: h.x + (i === 0 ? 0.9 : -0.9), y: h.y - 0.25, zoom: 3.6 }, 0.5, { drift: 0.1 }); };
+    if (v.step === -1 && v.t > 0.6) { v.step = 0; v.stepT = 0; Sound.voice(this.picks[0].char, v.lines[0]); this.vsFighters[0].doReact('talk'); closeUp(0); }
+    if (v.step === 0 && v.stepT > 2.2) { v.step = 1; v.stepT = 0; Sound.voice(this.picks[1].char, v.lines[1]); this.vsFighters[1].doReact('talk'); closeUp(1); }
+    if (v.step === 1 && v.stepT > 2.2) { v.step = 2; v.stepT = 0; this.vsFighters.forEach((f) => f.doReact('locked')); Sound.sfx('ui_lock_in'); this.L.setCam('versus', 0.35, { zk: 1.15 }); this.L.cam.addTrauma(0.4); }
     const skip = active && (this.game.input.menu('confirm') || this.game.ui.mouse.clicked) && v.t > 0.8 && !this.net;
     if ((v.step === 2 && v.stepT > 1.0) || skip) this.finishSelect();
   }
@@ -276,8 +282,8 @@ export class CharSelectScreen {
     // name tags + cursors above fighters
     ORDER.forEach((c, i) => {
       const f = this.F[c];
-      const head = f.rig.root.position.clone().add(new THREE.Vector3(0, (c === 'brutus' ? 2.4 : c === 'bobby' ? 1.75 : 2.2) + (f.slot.crate ? 0.5 : 0) + (f.slot.seat ? -0.3 : 0), 0));
-      const p = this.project(head, ui);
+      const hh = f.headPos();
+      const p = this.project(hh.x, hh.y + (c === 'bobby' ? 0.75 : 0.62), ui);
       const nm = CDATA[c].name;
       const tw = ui.measure(nm, 'labelB') + 12;
       const hovered = this.p.some((q) => q.cursor === i && q.stage !== 'wait');
@@ -309,7 +315,8 @@ export class CharSelectScreen {
     else hintBar(ui, [[['<', '>'], 'CHOOSE'], [['^', 'v'], 'CUSTOMIZE'], [[keyLabel(b.p1.light[0]), 'ENT'], 'OK'], [[keyLabel(b.p1.heavy[0]), 'ESC'], 'BACK']], { x: Math.floor(ui.w / 2) - 140, y: ui.h - 12 });
     if (this.speech) {
       const f = this.F[this.speech.c];
-      const p = this.project(f.rig.headWorld(new THREE.Vector3()).add(new THREE.Vector3(0, 0.9, 0)), ui);
+      const hh = f.headPos();
+      const p = this.project(hh.x, hh.y + 0.9, ui);
       const s = this.speech.txt.slice(0, Math.floor(this.speech.t * 40));
       const lines = ui.wrap(s, 120, 'body');
       const w = Math.max(10, ...lines.map((l) => ui.measure(l, 'body'))) + 10, h = lines.length * 9 + 7;
@@ -378,7 +385,8 @@ export class CharSelectScreen {
     // speech bubbles
     const showLine = (i, txt, k) => {
       const f = this.vsFighters[i];
-      const p = this.project(f.rig.headWorld(new THREE.Vector3()).add(new THREE.Vector3(0, 0.6, 0)), ui);
+      const hh = f.headPos();
+      const p = this.project(hh.x, hh.y + 0.6, ui);
       const s = txt.slice(0, Math.floor(k * 40));
       const lines = ui.wrap(s, 150, 'body');
       const w = Math.max(10, ...lines.map((l) => ui.measure(l, 'body'))) + 12, h = lines.length * 9 + 8;

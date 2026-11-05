@@ -7,7 +7,8 @@ import { applyMatchResult } from '../core/progress.js';
 import { CHARS as CDATA } from '../sim/data.js';
 import { startMatch, goCharSelect, goMainMenu } from './flow.js';
 import { snailCounter } from '../ui/widgets.js';
-import { portrait } from '../render/portraits.js';
+import { portrait } from '../px/portrait.js';
+import { SKILLS } from '../sim/data.js';
 import { clamp, ease } from '../core/math.js';
 import { line } from '../data/dialogue.js';
 
@@ -15,7 +16,6 @@ export class ResultsScreen {
   constructor(match, res, cfg) { this.match = match; this.res = res; this.cfg = cfg; this.net = cfg.net || null; }
   enter() {
     const g = this.game;
-    this.scene = this.match.scene; this.camera = this.match.camera;
     const mode = this.cfg.mode;
     const localPlayers = mode === 'local' ? [0, 1] : this.net ? [this.net.localIndex] : [0];
     this.rewards = applyMatchResult(this.res, { mode, localPlayers, stage: this.cfg.stage, cpuLevel: this.cfg.players[1]?.cpu });
@@ -32,7 +32,7 @@ export class ResultsScreen {
     this.title = w >= 0 ? `${CDATA[this.res.fighters[w].char].name} WINS!` : 'DRAW!';
     this.sub = w >= 0 ? `${winnerName} takes the match ${this.res.wins[w]}-${this.res.wins[1 - w]}` : '';
     this.quote = w >= 0 ? line(this.res.fighters[w].char === 'bobby' && this.match.sim.s.fighters[w].cs.demon ? 'demon' : this.res.fighters[w].char, 'victory') : '';
-    this.portrait = w >= 0 ? portrait(g.renderer, this.res.fighters[w].char, this.cfg.players[w].cos || {}, { size: 64, demon: this.match.sim.s.fighters[w].cs.demon }) : null;
+    this.portrait = w >= 0 ? portrait(this.res.fighters[w].char, this.cfg.players[w].cos || {}, { size: 64, demon: this.match.sim.s.fighters[w].cs.demon, face: 'grin' }) : null;
     const mine = localPlayers.includes(w);
     Sound.music('results', { fade: 1 });
     if (mode !== 'local' && !mine && w >= 0) Sound.stinger('stinger_lose');
@@ -70,9 +70,10 @@ export class ResultsScreen {
     goCharSelect(this.game, this.cfg.mode);
   }
   exit() { this.match.exit(); this.game.touch.active = false; }
+  render(d, dt) { this.match.render(d, dt); }
   update(dt, active) {
     this.t += dt;
-    this.match.renderViews(dt, 1);
+    this.match.updateVisuals(dt);
     // count up rewards
     const total = this.rewards.total;
     if (this.t > 1.2 && this.counted < total) {
@@ -107,7 +108,7 @@ export class ResultsScreen {
     }
     // stats table
     const sx = bx + 92, sy = by + 62;
-    const rows = [['DAMAGE', 'dmg'], ['MAX COMBO', 'maxCombo'], ['PERFECT BLOCKS', 'perfects'], ['SHELLS BROKEN', null], ['MOLTS', 'molts'], ['ULTIMATES', 'ults'], ['ARENA SNAILS', 'snails']];
+    const rows = [['DAMAGE', 'dmg'], ['MAX COMBO', 'maxCombo'], ['PERFECT BLOCKS', 'perfects'], ['SHELLS BROKEN', null], ['SKILLS USED', 'skills'], ['ULTIMATES', 'ults'], ['PERFECT ULT QTE', 'ultQte'], ['ARENA SNAILS', 'snails']];
     ui.text('P1', sx + 120, sy, { font: 'labelB', color: PLAYER_COLORS[0].light, align: 'center' });
     ui.text('P2', sx + 160, sy, { font: 'labelB', color: PLAYER_COLORS[1].light, align: 'center' });
     rows.forEach(([lbl, k], i) => {
@@ -118,6 +119,11 @@ export class ResultsScreen {
         ui.text(String(v), sx + 120 + p * 40, yy, { font: 'body', align: 'center', color: P.cream4 });
       }
     });
+    // skills each fighter drafted
+    for (let p = 0; p < 2; p++) {
+      const sk = this.res.fighters[p].skills || [];
+      sk.forEach((id, j) => ui.icon('sk_' + (SKILLS[id]?.icon || 'mine'), sx + 106 + p * 40 + j * 13 - 13, sy + 12 + rows.length * 10 + 2));
+    }
     // rewards (local profile)
     const rx = bx + bw - 130, ry = by + 62;
     if (this.cfg.mode !== 'training') {

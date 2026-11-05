@@ -1,6 +1,5 @@
 // Online lobby: host a room (get a code) or join a friend's room by typing their code.
-import { ensureLocker, lockerFighters, goMainMenu, goCharSelect } from './flow.js';
-import { LOCKER_SLOTS } from '../render/stages/lockerroom.js';
+import { ensureLobby, lobbyFighters, goMainMenu, goCharSelect } from './flow.js';
 import { NetSession } from '../net/net.js';
 import { P, PLAYER_COLORS } from '../ui/palette.js';
 import { Sound } from '../core/sound.js';
@@ -10,12 +9,10 @@ import { hintBar } from '../ui/widgets.js';
 export class OnlineScreen {
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.F = lockerFighters(g);
-    for (const c of CHARS) this.F[c].setVisible(c === Save.data.mainFighter);
-    this.F[Save.data.mainFighter].setSlot(LOCKER_SLOTS.bench);
-    this.L.setCam([-4.6, 2.0, 1.2], [-3.0, 1.0, -4.4], 42, 1.6);
+    this.L = ensureLobby();
+    this.F = lobbyFighters();
+    this.L.homeAll();
+    this.L.setCam(Save.data.mainFighter, 1.4, { drift: 0.04, dx: 1.2 });
     this.state = 'menu'; this.sel = 0; this.code = ''; this.t = 0;
     this.net = null; this.msg = '';
     this.editingName = false;
@@ -84,10 +81,10 @@ export class OnlineScreen {
     this.handedOff = true;
     goCharSelect(this.game, 'online', { net: this.net });
   }
+  render(d) { this.L.render(d, { dim: 0.15 }); }
   update(dt, active) {
     this.t += dt;
     this.L.update(dt);
-    this.F[Save.data.mainFighter].update(dt, { look: this.L.camera.position });
     if (this.state === 'lobby' && this.net?.isHost && this.ready?.[0] && this.ready?.[1]) { this.net.send({ t: 'go' }); this.go(); }
     if (!active || this.editingName || this.state === 'typing') return;
     const inp = this.game.input;

@@ -2,7 +2,7 @@
   "name": "mantis-mayhem",
   "version": "1.0.0",
   "private": true,
-  "description": "Mantis Mayhem - an underwater mantis shrimp voxel fighting game",
+  "description": "Mantis Mayhem - an underwater mantis shrimp 2D pixel-art fighting game",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,8 +16,7 @@
     "@fontsource/pixelify-sans": "^5.3.0",
     "@fontsource/silkscreen": "^5.3.0",
     "@fontsource/tiny5": "^5.3.0",
-    "peerjs": "^1.5.5",
-    "three": "^0.186.1"
+    "peerjs": "^1.5.5"
   },
   "devDependencies": {
     "peer": "^1.0.2",

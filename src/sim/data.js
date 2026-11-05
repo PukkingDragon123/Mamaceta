@@ -136,3 +136,27 @@ export function moveFor(char, demon, id) {
 }
 
 export const ULT_NAMES = { jim: 'ABYSSAL WAVE FIST', brutus: 'BELLY FLOP OF DOOM', bobby: 'TRAFFIC JAM', mimi: 'PURU PURU TORNADO', demon: 'LIGHTS OUT' };
+
+// Skills: 3 slots per fighter. Pick 1 at the start of the match; whoever falls in a set picks
+// another; before the final set both fighters pick one more. cd = cooldown (frames), t = duration.
+export const SKILLS = {
+  mine: { name: 'CAVITATION MINE', icon: 'mine', cd: 540, t: 18, desc: 'Plant a bubble mine. It implodes when touched.', color: '#9ff3ff' },
+  riptide: { name: 'RIPTIDE DASH', icon: 'wave', cd: 420, t: 22, air: true, desc: 'Ride a current straight through your foe and spin them.', color: '#49c2bd' },
+  habanero: { name: 'HABANERO RAGE', icon: 'chili', cd: 1080, t: 30, desc: '6s of fire: +25% damage and speed. You take a bit more.', color: '#ff5a2a' },
+  eyes: { name: 'POLARIZED EYES', icon: 'eye', cd: 900, t: 14, desc: 'See every move: 3s of automatic perfect blocks.', color: '#c194ff' },
+  coral: { name: 'CORAL WALL', icon: 'coral', cd: 840, t: 18, desc: 'Grow a coral wall that stops attacks and shots.', color: '#ff7a5a' },
+  hook: { name: 'ANCHOR HOOK', icon: 'hook', cd: 540, t: 28, air: true, desc: 'Throw a chained anchor and yank your foe in.', color: '#9aa6b2' },
+  loteria: { name: 'LOTERIA', icon: 'card', cd: 960, t: 26, desc: 'Draw a lucky Loteria card. Six wild effects!', color: '#f0c33c' },
+  hermit: { name: 'HERMIT ARMOR', icon: 'shellArmor', cd: 960, t: 20, desc: 'Wear a hermit shell: 4s of super armor, -30% damage.', color: '#d8a05e' },
+  decoy: { name: 'MOLT DECOY', icon: 'ghost', cd: 720, t: 8, air: true, desc: 'Leave a husk decoy and reappear behind your foe.', color: '#e8dcc0' },
+  eel: { name: 'ELECTRIC EEL', icon: 'bolt', cd: 660, t: 26, air: true, desc: 'An eel coils around you and shocks everything near.', color: '#fff08a' },
+  mariachi: { name: 'MARIACHI BLAST', icon: 'guitar', cd: 600, t: 22, desc: 'A guitar riff shockwave. Shoves foes, reflects shots.', color: '#ff6fb0' },
+  pinata: { name: 'PINATA BOMB', icon: 'pinata', cd: 540, t: 18, desc: 'Lob a mini pinata that explodes into candy shrapnel.', color: '#6aff8a' },
+};
+export const SKILL_IDS = Object.keys(SKILLS);
+export const LOTERIA = [
+  { name: 'EL SOL', desc: 'HEAL!' }, { name: 'LA MUERTE', desc: 'NEXT HIT +60%' }, { name: 'EL VALIENTE', desc: 'SUPER ARMOR' },
+  { name: 'LA ESTRELLA', desc: '+35 ULT' }, { name: 'EL DIABLITO', desc: 'FOE CONFUSED' }, { name: 'LA SIRENA', desc: 'SHELL RESTORED' },
+];
+// cinematic ultimate: QTE prompt timings (frames from cinematic start) and buttons 0=LIGHT 1=HEAVY 2=BLOCK
+export const ULT_CINE = { dur: 330, steps: [72, 124, 176, 228], window: 13, lead: 44, final: 290, good: 55, bad: 28, finalBase: 80, finalPer: 32 };

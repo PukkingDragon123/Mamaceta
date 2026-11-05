@@ -1,6 +1,5 @@
 // Map vote: two huge rusty bulkhead doors with the arena names. Pick a door; ties go to a roulette.
-import * as THREE from 'three';
-import { ensureLocker, lockerFighters, startMatch, goMainMenu } from './flow.js';
+import { ensureLobby, lobbyFighters, startMatch, goMainMenu } from './flow.js';
 import { P, PLAYER_COLORS } from '../ui/palette.js';
 import { Sound } from '../core/sound.js';
 import { CHARS } from '../core/save.js';
@@ -16,12 +15,13 @@ export class MapVoteScreen {
   constructor(cfg) { this.cfg = cfg; this.net = cfg.net || null; }
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    const F = lockerFighters(g);
-    for (const c of CHARS) F[c].setVisible(false);
-    this.L.setCam([8.1, 2.3, 4.6], [8.1, 2.0, -6], 48, 2);
-    for (const d of this.L.doors) { d.target = 0; d.highlight = 0; }
+    this.L = ensureLobby();
+    const F = lobbyFighters();
+    for (const c of CHARS) F[c].visible = false;
+    this.doors = this.L.bar.spots?.doors || [{ x: 16, y: 1.8 }, { x: 20, y: 1.8 }];
+    this.L.setCam('doors', 1.6, { drift: 0.02 });
+    this.L.bar.setDoor?.(0, 0); this.L.bar.setDoor?.(1, 0);
+    this.doorOpen = [0, 0];
     this.p = [{ door: 0, voted: false }, { door: 1, voted: false }];
     this.local = this.cfg.mode === 'local';
     this.cpu = this.cfg.mode === 'cpu';
@@ -31,14 +31,15 @@ export class MapVoteScreen {
     g.input.mode = this.local ? 'versus' : 'solo';
     Sound.music('doors', { fade: 1 });
   }
-  exit() { this.game.input.mode = 'solo'; }
+  exit() { this.game.input.mode = 'solo'; for (const c of CHARS) if (this.L.F[c]) this.L.F[c].visible = true; }
+  render(d) { this.d = d; this.L.render(d); }
   controls(i) { if (this.net) return i === this.localIdx; if (this.cpu) return i === 0; return true; }
   vote(i, door) {
     const p = this.p[i];
     if (p.voted) return;
     p.door = door; p.voted = true;
     Sound.sfx('ui_vote'); Sound.sfx('metal_clang', { vol: 0.4 });
-    this.L.shake = 0.3;
+    this.L.cam.addTrauma(0.3);
     if (this.net && i === this.localIdx) this.net.send({ t: 'vote', door });
   }
   onNet(m) {
@@ -65,17 +66,16 @@ export class MapVoteScreen {
   }
   openDoor() {
     this.phase = 'open'; this.openT = 0;
-    const d = this.L.doors[this.result];
-    d.target = 1;
+    const d = this.doors[this.result];
     Sound.sfx('ui_door_creak');
-    this.L.shake = 0.5;
-    this.L.setCam([d.x, 1.9, 1.0], [d.x, 1.8, -7], 40, 0.9);
+    this.L.cam.addTrauma(0.5);
+    this.L.setCam({ x: d.x, y: d.y || 2, zoom: 2.2 }, 0.9, { drift: 0.1 });
   }
   update(dt, active) {
     this.t += dt;
     this.L.update(dt);
-    const L = this.L;
-    for (let i = 0; i < 2; i++) L.doors[i].highlight = this.p.filter((q) => q.door === i).length;
+    for (let i = 0; i < 2; i++) this.L.bar.doorVotes?.(i, this.p.filter((q) => q.door === i).length);
+    if (this.phase === 'open') { this.doorOpen[this.result] = Math.min(1, this.doorOpen[this.result] + dt * 0.9); this.L.bar.setDoor?.(this.result, ease.inOutSine(this.doorOpen[this.result])); }
     if (this.phase === 'vote') {
       this.time -= dt;
       if (this.cpu && !this.p[1].voted) { this.cpuT -= dt; if (this.cpuT <= 0) this.vote(1, Math.random() < 0.5 ? 0 : 1); }
@@ -105,8 +105,9 @@ export class MapVoteScreen {
       }
     } else if (this.phase === 'open') {
       this.openT += dt;
-      if (this.openT > 0.6 && Math.random() < 0.5) this.L.particles.spawn({ x: this.L.doors[this.result].x + (Math.random() - 0.5) * 2, y: 0.3 + Math.random() * 3, z: -5.6, vy: 1 + Math.random(), vx: 0, grav: 0.8, life: 2, size: 0.08 + Math.random() * 0.1, spr: 'bubble', color: 0xdff8ff, wob: [0.4, 5] });
-      if (this.openT > 1.2) this.L.setCam([this.L.doors[this.result].x, 1.8, -5.0], [this.L.doors[this.result].x, 1.8, -9], 50, 1.6);
+      const dr = this.doors[this.result];
+      if (this.openT > 0.6 && Math.random() < 0.5) this.L.fx.bubbleBurst(dr.x + (Math.random() - 0.5) * 2, 0.3 + Math.random() * 3, 2, 0.8);
+      if (this.openT > 1.2 && !this.pushed) { this.pushed = true; this.L.setCam({ x: dr.x, y: dr.y || 2, zoom: 4.5 }, 1.0); }
       if (this.openT > 2.1 && !this.started) {
         this.started = true;
         startMatch(this.game, { mode: this.cfg.mode, players: this.cfg.players, stage: STAGE_LIST[this.result], net: this.net, seed: this.seed, localIndex: this.localIdx });
@@ -123,17 +124,18 @@ export class MapVoteScreen {
       ui.text(String(Math.max(0, Math.ceil(this.time))), tx, 34, { font: 'big', align: 'center', color: P.cream4 });
     }
     for (let i = 0; i < 2; i++) {
-      const d = this.L.doors[i];
-      const p = new THREE.Vector3(d.x, 3.2, -5.9).project(this.camera);
-      const sx = Math.round((p.x * 0.5 + 0.5) * ui.w), sy = Math.round((1 - (p.y * 0.5 + 0.5)) * ui.h);
+      const d = this.doors[i];
+      if (!this.d) continue;
+      const p = this.d.toUI(d.x, (d.y || 2) + 1.9, ui);
+      const sx = Math.round(p.x), sy = Math.round(p.y);
       const lit = this.phase === 'roulette' ? (this.roul.cur % 2 === i) : this.phase === 'open' ? i === this.result : this.p.some((q) => q.door === i);
       const w = Math.max(ui.measure(NAMES[i], 'labelB') + 14, 96);
       ui.panel(sx - w / 2, sy - 14, w, 28, { seed: 100 + i, tone: lit ? 'light' : 'dark', plankSize: 14, barnacles: 2 });
       ui.text(NAMES[i], sx, sy - 9, { font: 'labelB', align: 'center', color: lit ? P.gold4 : P.cream2 });
       ui.text(SUBS[i], sx, sy + 3, { font: 'body', align: 'center', color: P.cream1 });
       // player badges on the door
-      const fp = new THREE.Vector3(d.x, 1.2, -5.8).project(this.camera);
-      const fx = Math.round((fp.x * 0.5 + 0.5) * ui.w), fy = Math.round((1 - (fp.y * 0.5 + 0.5)) * ui.h);
+      const fp = this.d.toUI(d.x, 0.9, ui);
+      const fx = Math.round(fp.x), fy = Math.round(fp.y);
       this.p.forEach((q, k) => {
         if (q.door !== i || this.phase !== 'vote') return;
         const col = PLAYER_COLORS[k];

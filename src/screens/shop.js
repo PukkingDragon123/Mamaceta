@@ -1,11 +1,8 @@
 // Madam Molt's hidden shop: she waddles in, opens her secret locker, and sells 5 random items
 // a day. Also the wardrobe where you equip everything you own (with a live preview pedestal).
-import * as THREE from 'three';
-import { ensureLocker, lockerFighters, goMainMenu, rebuildFighter } from './flow.js';
-import { MenuFighter } from '../render/menuFighter.js';
-import { FX } from '../render/fx.js';
-import { portrait } from '../render/portraits.js';
-import { victoryPose } from '../render/anim.js';
+import { ensureLobby, lobbyFighters, goMainMenu, rebuildFighter } from './flow.js';
+import { MenuFighter2D } from '../px/menuFighter.js';
+import { portrait } from '../px/portrait.js';
 import { P, RARITY } from '../ui/palette.js';
 import { paperTag } from '../ui/sprites.js';
 import { snailCounter, dialogueBox, hintBar } from '../ui/widgets.js';
@@ -22,37 +19,35 @@ const SLOT_ICON = { skin: 'shirt', gloves: 'glove', hitfx: 'spark', trail: 'trai
 export class ShopScreen {
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.F = lockerFighters(g);
-    for (const c of CHARS) this.F[c].setVisible(false);
-    const M = this.L.molt;
-    M.group.visible = true;
-    M.group.position.set(this.L.moltX + 4.5, 0, -4.7);
-    M.group.rotation.y = Math.PI;
-    this.L.setCam([this.L.moltX - 1.6, 1.75, -1.0], [this.L.moltX + 0.6, 1.3, -5.6], 42, 2.2);
+    this.L = ensureLobby();
+    this.F = lobbyFighters();
+    const sp = this.L.bar.spots || {};
+    this.molt = sp.molt || { x: 30, y: 0 };
+    this.secret = sp.secret || { x: this.molt.x - 5, y: 1.5 };
+    this.L.setCam(sp.secret ? { x: this.secret.x, y: (this.secret.y || 0) + 1.6, zoom: 2.4 } : 'shop', 1.6, { drift: 0.04 });
     this.phase = 'arrive'; this.pt = 0; this.t = 0;
     this.say('hello');
     this.items = dailyShop();
     this.sel = 0; this.tab = 0; // 0 deals, 1 wardrobe
     this.wChar = Save.data.mainFighter; this.wSlot = 0; this.wSel = 0;
-    this.fx = new FX(this.L.scene, g.renderer, this.L.particles, this.L.camera);
+    this.fx = this.L.fx;
     this.preview = null; this.previewKey = '';
     this.fxT = 0;
     this.bump = 0;
     Sound.music('shop', { fade: 1.2 });
   }
   exit() {
-    this.preview?.dispose();
-    this.L.molt.group.visible = false;
-    this.L.moltOpenTarget = 0;
+    if (this.preview) this.L.extra = this.L.extra.filter((e) => e !== this.preview);
+    this.L.bar.setSecretDoor?.(0);
     this.game.input.mode = 'solo';
   }
+  render(d) { this.d = d; this.L.render(d); }
   say(kind, txt) {
     this.dlg = { text: txt || line('molt', kind) || '...', t: 0 };
-    this.L.molt.setTalking(true);
+    this.L.bar.moltTalk?.(true);
     Sound.voice('molt', this.dlg.text);
   }
+  pedestal() { const p = this.L.bar.spots?.pedestal; return p || { x: this.molt.x - 2.4, y: this.molt.y || 0 }; }
 
   // ---------------------------------------------------------------- preview pedestal
   previewSpec() {
@@ -76,12 +71,13 @@ export class ShopScreen {
     if (!sp) return;
     const key = sp.char + JSON.stringify({ skin: sp.cos.skin, gloves: sp.cos.gloves });
     if (key !== this.previewKey) {
-      this.preview?.dispose();
-      this.preview = new MenuFighter(this.L.scene, sp.char, sp.cos, this.L.particles);
-      const p = this.L.pedestalTop;
-      this.preview.setSlot({ x: p.x, z: p.z, face: -1 });
-      this.preview.rig.root.position.y = p.y;
+      if (this.preview) this.L.extra = this.L.extra.filter((e) => e !== this.preview);
+      this.preview = new MenuFighter2D(sp.char, sp.cos);
+      const p = this.pedestal();
+      this.preview.setSpot({ x: p.x, y: p.y || 0, face: 1 });
+      this.preview.setActivity('guard');
       this.preview.doReact('locked');
+      this.L.extra.push(this.preview);
       this.previewKey = key;
     }
     this.previewSlot = sp;
@@ -95,19 +91,19 @@ export class ShopScreen {
     const it = this.items[this.sel];
     if (!it) return;
     if (Save.owns(it.id)) { this.say('owned'); Sound.sfx('ui_error'); return; }
-    if (!Save.spend(it.price)) { this.say('poor'); Sound.sfx('ui_error'); this.L.molt.mood('angry', 1.2); return; }
+    if (!Save.spend(it.price)) { this.say('poor'); Sound.sfx('ui_error'); this.L.bar.moltMood?.('angry'); return; }
     Save.grant(it.id);
     // auto-equip
     if (it.slot === 'skin') Save.equip(it.char, 'skin', it.key);
     else Save.equip(Save.data.mainFighter, it.slot, it.key);
     Save.save();
     Sound.sfx('ui_purchase'); Sound.stinger('stinger_purchase');
-    this.L.molt.mood('greedy', 2);
+    this.L.bar.moltMood?.('greedy');
     this.say(it.rarity === 'legendary' ? 'legendary' : 'buy');
     this.bump = 1;
-    const reg = this.L.register.position;
-    this.fx.burst(reg.x, reg.y + 0.6, { n: 24, spr: 'snail', colors: [0xffffff], sp0: 1, sp1: 3, grav: -6, life1: 1.2, s0: 0.12, s1: 0.18 });
-    this.fx.burst(this.L.pedestalTop.x, 1.6, { n: 30, spr: 'sparkle', colors: [0xfff08a, 0xffffff, 0xff8ac8], glow: true, anim: 'life', sp1: 4 });
+    this.fx.icons(this.molt.x, (this.molt.y || 0) + 1.4, 16, 'snail', ['#f0c33c'], { sp1: 4 });
+    const pd = this.pedestal();
+    this.fx.icons(pd.x, (pd.y || 0) + 1.2, 18, 'star', ['#fff08a', '#ffffff', '#ff8ac8'], { sp1: 4 });
     this.preview?.doReact('pick');
   }
   equipWardrobe() {
@@ -125,65 +121,54 @@ export class ShopScreen {
   update(dt, active) {
     this.t += dt; this.pt += dt; this.bump = Math.max(0, this.bump - dt * 2);
     this.L.update(dt);
-    this.fx.update(dt);
-    const M = this.L.molt;
-    if (this.dlg) { this.dlg.t += dt; if (this.dlg.t * 40 > this.dlg.text.length + 10) M.setTalking(false); }
+    if (this.dlg) { this.dlg.t += dt; if (this.dlg.t * 40 > this.dlg.text.length + 10) this.L.bar.moltTalk?.(false); }
     const inp = this.game.input;
     switch (this.phase) {
       case 'arrive': {
-        const k = clamp(this.pt / 2.2, 0, 1);
-        M.group.position.x = this.L.moltX + 4.5 - ease.outQuad(k) * 3.4;
-        M.group.position.y = Math.abs(Math.sin(this.pt * 9)) * 0.05 * (1 - k);
-        M.group.rotation.y = Math.PI * 0.7;
-        if (this.pt > 0.3 && Math.floor(this.pt * 4.5) !== Math.floor((this.pt - dt) * 4.5) && k < 1) Sound.sfx('step', { vol: 0.4, pitch: 0.7 });
-        if (k >= 1 && (this.pt > 3.2 || (active && inp.menu('confirm')))) { this.phase = 'open'; this.pt = 0; M.mood('open', 2); M.group.rotation.y = Math.PI * 1.05; }
+        // the secret door behind the shelf slides open
+        const k = clamp((this.pt - 0.5) / 1.2, 0, 1);
+        this.L.bar.setSecretDoor?.(ease.inOutSine(k));
+        if (this.pt > 0.5 && !this.openSnd) { this.openSnd = true; Sound.sfx('ui_locker_open'); Sound.sfx('ui_door_creak', { vol: 0.5, pitch: 1.3 }); }
+        if (k >= 1 && (this.pt > 2.0 || (active && inp.menu('confirm')))) { this.phase = 'open'; this.pt = 0; this.L.setCam('shop', 1.4, { drift: 0.02 }); }
         break;
       }
       case 'open':
-        if (this.pt > 0.4 && this.L.moltOpenTarget === 0) {
-          this.L.moltOpenTarget = 1; Sound.sfx('ui_locker_open'); Sound.sfx('ui_door_creak', { vol: 0.5, pitch: 1.3 });
-          this.fx.burst(this.L.moltX, 1.6, { n: 30, spr: 'sparkle', colors: [0xfff08a, 0xff8ac8], glow: true, anim: 'life', sp1: 3, life1: 1.2 });
-        }
-        if (this.pt > 1.0) this.L.setCam([this.L.moltX, 1.75, -5.2], [this.L.moltX, 1.6, -9], 46, 1.6);
-        if (this.pt > 2.0) {
-          this.phase = 'shop'; this.pt = 0;
-          M.group.position.set(this.L.moltX - 0.35, 0.42, -12.95); M.group.rotation.y = -Math.PI / 2; M.mood('wave', 1.5);
-          this.L.setCam([this.L.moltX - 0.9, 1.95, -6.9], [this.L.moltX - 0.2, 1.35, -12.4], 46, 1.4);
-          this.say('browse');
-        }
+        if (this.pt > 0.3 && !this.sparkled) { this.sparkled = true; this.fx.icons(this.molt.x, (this.molt.y || 0) + 1.6, 18, 'star', ['#fff08a', '#ff8ac8'], { sp1: 3 }); this.L.bar.moltMood?.('wave'); }
+        if (this.pt > 1.4) { this.phase = 'shop'; this.pt = 0; this.say('browse'); }
         break;
       case 'shop':
         this.syncPreview();
-        this.preview?.update(dt, { look: this.L.camera.position, fixedActivity: true });
-        if (this.preview) this.preview.rig.root.rotation.y = Math.sin(this.t * 0.6) * 0.6;
         this.previewFx(dt);
         if (active) this.shopInput(inp);
-        if (Math.random() < dt * 0.05) { this.say('idle'); M.mood('count', 2); }
+        if (Math.random() < dt * 0.05) { this.say('idle'); this.L.bar.moltMood?.('count'); }
         break;
       case 'leave':
-        if (this.pt > 0.5) this.L.setCam([this.L.moltX - 1.6, 1.75, -1.0], [this.L.moltX + 0.6, 1.3, -5.6], 42, 1.8);
-        if (this.pt > 1.0) this.L.moltOpenTarget = 0;
+        if (this.pt > 0.3 && !this.backCam) { this.backCam = true; this.L.setCam(this.L.bar.spots?.secret ? { x: this.secret.x, y: (this.secret.y || 0) + 1.6, zoom: 2.2 } : 'overview', 1.0); }
+        if (this.pt > 1.0) this.L.bar.setSecretDoor?.(clamp(1 - (this.pt - 1.0) * 2, 0, 1));
         if (this.pt > 1.3 && !this.leftSound) { this.leftSound = true; Sound.sfx('ui_locker_close'); }
         if (this.pt > 1.8 && !this.gone) { this.gone = true; goMainMenu(this.game); }
         break;
     }
-    M.update(dt);
   }
 
   previewFx(dt) {
     const sp = this.previewSlot;
     if (!sp || !this.preview) return;
     this.fxT += dt;
-    const P0 = this.L.pedestalTop;
+    const P0 = this.pedestal();
     if (sp.slot === 'hitfx' && this.fxT > 0.9) {
       this.fxT = 0;
       this.preview.doReact('pick');
-      this.fx.hitEffect(P0.x - 0.7, P0.y + 1.2, 1.3, -1, sp.key);
+      this.fx.hitEffect(P0.x + 0.8, (P0.y || 0) + 1.1, 1.3, 1, sp.key);
       Sound.sfx('hit_medium', { vol: 0.5 });
     }
     if (sp.slot === 'trail') {
       const tr = TRAILS.find((x) => x.key === sp.key);
-      if (tr && tr.colors && Math.random() < dt * 30) this.L.particles.spawn({ x: P0.x + (Math.random() - 0.5) * 0.6, y: P0.y + 0.4 + Math.random() * 1.2, z: P0.z + 0.3, vx: (Math.random() - 0.5) * 0.4, vy: 0.4, grav: tr.spr === 'bubbleS' ? 0.6 : -0.2, life: 1, size: 0.08, size1: 0.02, spr: tr.spr, color: tr.colors[Math.floor(Math.random() * tr.colors.length)], glow: !!tr.glow, anim: tr.spr === 'sparkle' ? 'life' : null, wob: [0.3, 5] });
+      if (tr && tr.colors && Math.random() < dt * 20) {
+        const name = { bubbleS: 'bubble', note: 'note', sparkle: 'star', dot: 'px', pixelS: 'px', petal: 'petal' }[tr.spr] || 'px';
+        const x = P0.x + (Math.random() - 0.5) * 0.6, y = (P0.y || 0) + 0.4 + Math.random() * 1.2;
+        if (name === 'bubble') this.fx.bubbleBurst(x, y, 1, 0.6); else if (name === 'px') this.fx.pixels(x, y, 2, { colors: tr.colors, sp1: 0.6, up: 0.8, grav: 1 }); else this.fx.icons(x, y, 1, name, tr.colors, { sp1: 0.6, up: 0.6, grav: 0.5 });
+      }
     }
   }
 
@@ -210,7 +195,7 @@ export class ShopScreen {
   // ---------------------------------------------------------------- UI
   itemIcon(ui, it, x, y, size) {
     if (it.slot === 'skin') {
-      const img = portrait(this.game.renderer, it.char, { skin: it.key }, { size });
+      const img = portrait(it.char, { skin: it.key }, { size });
       ui.img(img, x, y);
       return;
     }
@@ -245,9 +230,8 @@ export class ShopScreen {
     ui.text(`NEW STOCK IN ${formatTime(secondsUntilMidnight())}`, 186, 10, { font: 'label', color: P.pink4 });
     if (this.tab === 0) this.drawDeals(ui); else this.drawWardrobe(ui);
     if (this.dlg && this.dlg.t < 5) {
-      const hp = this.L.molt.group.position.clone(); hp.y += 2.0;
-      hp.project(this.camera);
-      const px = Math.round((hp.x * 0.5 + 0.5) * ui.w), py = Math.round((1 - (hp.y * 0.5 + 0.5)) * ui.h);
+      const pp = this.d ? this.d.toUI(this.molt.x, (this.molt.y || 0) + 2.1, ui) : { x: ui.w * 0.7, y: ui.h * 0.3 };
+      const px = Math.round(pp.x), py = Math.round(pp.y);
       const txt = this.dlg.text.slice(0, Math.floor(this.dlg.t * 40));
       const lines = ui.wrap(txt, 140, 'body');
       const w = Math.max(20, ...lines.map((l) => ui.measure(l, 'body'))) + 12, h = lines.length * 9 + 16;

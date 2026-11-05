@@ -1,4 +1,4 @@
-// On-screen touch controls (virtual stick + LIGHT / HEAVY / BLOCK + pause) for phones and tablets.
+// On-screen touch controls (virtual stick + LIGHT / HEAVY / BLOCK / ULT / 3 skills + pause) for phones and tablets.
 // Shown automatically after the first touch; feeds player 1's input bits.
 import { BTN } from '../core/input.js';
 import { P } from './palette.js';
@@ -35,7 +35,10 @@ export class TouchControls {
         { bit: BTN.LIGHT, label: 'L', x: bx - r * 2.3, y: by + r * 0.4, col: P.gold3 },
         { bit: BTN.HEAVY, label: 'H', x: bx, y: by - r * 0.9, col: P.red3 },
         { bit: BTN.BLOCK, label: 'B', x: bx + r * 0.1, y: by + r * 1.4, col: P.teal3 },
-        { bit: BTN.LIGHT | BTN.HEAVY, label: 'ULT', x: bx - r * 2.3, y: by - r * 1.9, col: P.purple3, small: true },
+        { bit: BTN.LIGHT | BTN.HEAVY, label: 'ULT', x: bx - r * 2.3, y: by - r * 1.9, col: P.orange3, small: true },
+        { bit: BTN.SKILL1, label: 'S1', x: bx - r * 4.4, y: by - r * 0.2, col: P.teal4, small: true },
+        { bit: BTN.SKILL2, label: 'S2', x: bx - r * 4.1, y: by - r * 1.9, col: P.teal4, small: true },
+        { bit: BTN.SKILL3, label: 'S3', x: bx - r * 0.2, y: by - r * 2.9, col: P.teal4, small: true },
       ],
       pause: { x: Math.floor(ui.w / 2) - 14, y: ui.h - 22, w: 28, h: 16 },
     };

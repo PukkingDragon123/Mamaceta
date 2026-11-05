@@ -1,17 +1,17 @@
 // Deterministic fighting-game simulation (60 ticks/s). All state lives in `this.s` as plain data
 // so it can be hashed / snapshotted for online play. Uses only deterministic arithmetic.
-import { PHYS, CHARS, MOVES, THROWS, moveFor } from './data.js';
+import { PHYS, CHARS, MOVES, THROWS, moveFor, SKILLS, SKILL_IDS, LOTERIA, ULT_CINE } from './data.js';
 import { STAGES } from './stages.js';
 import { makeRng, rngFloat, rngInt, rngChance } from '../core/rng.js';
 import { BTN } from '../core/input.js';
 
-const { LEFT, RIGHT, UP, DOWN, LIGHT, HEAVY, BLOCK } = BTN;
+const { LEFT, RIGHT, UP, DOWN, LIGHT, HEAVY, BLOCK, SKILL1, SKILL2, SKILL3 } = BTN;
 const abs = Math.abs, min = Math.min, max = Math.max, floor = Math.floor, sqrt = Math.sqrt;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const r4 = (v) => Math.round(v * 10000) / 10000; // keep floats tidy (still deterministic)
 
 const NEUTRAL = new Set(['idle', 'walk', 'crouch', 'land', 'block', 'crouchblock', 'dashEnd']);
-const HURT_STATES = new Set(['hitstun', 'airhit', 'knockdown', 'getup', 'thrown', 'dizzy', 'blockstun', 'ultVictim', 'bubbled', 'finished', 'ko', 'snagged']);
+const HURT_STATES = new Set(['hitstun', 'airhit', 'knockdown', 'getup', 'thrown', 'dizzy', 'blockstun', 'ultVictim', 'bubbled', 'finished', 'ko', 'snagged', 'ucVictim', 'shocked']);
 
 export class Sim {
   /**
@@ -27,7 +27,7 @@ export class Sim {
       timer: cfg.roundTime ? cfg.roundTime * 60 : PHYS.ROUND_TIME, pause: 0, slow: 0, slowAcc: 0,
       cine: null, qte: null, winner: -1, matchWinner: -1, done: false, nextId: 1,
       fighters: [], props: [], proj: [], plats: [], dark: 0, lastHit: -1, bartT: 0, jukebox: 0, roundWinners: [],
-      skipIntro: [false, false],
+      skipIntro: [false, false], pick: null, ucine: null,
     };
     this.resetRound(true);
   }
@@ -41,31 +41,105 @@ export class Sim {
       st: 'idle', sf: 0, mv: null, mf: 0, hitK: -1, connected: 0, charge: 0, chain: 0,
       hitstun: 0, blockstun: 0, hitstop: 0, inv: 0, armor: 0, launched: false,
       airJ: C.airJumps, dashCd: 0, dodgeCd: 0, blockPress: -999,
-      inCur: 0, inPrev: 0, buf: { L: -999, H: -999, C: -999, U: -999, F: -999, B: -999, D: -999 }, rel: { F: -999, B: -999 },
+      inCur: 0, inPrev: 0, buf: { L: -999, H: -999, C: -999, U: -999, F: -999, B: -999, D: -999, S0: -999, S1: -999, S2: -999 }, rel: { F: -999, B: -999 },
       combo: 0, comboDmg: 0, lastComboShown: 0,
       moltCd: 0, molt: 0, soft: 0, dizzy: 0, held: -1, drunk: 0, wob: 0, hic: 90,
-      grab: -1, qteEsc: 0, stagger: 0, taunting: 0,
-      cs: { demon: false, demonDone: false, snails: 3, puru: 'held', puruId: -1, bubbleCd: 0, flail: 1, stuck: 0, hide: 0, flop: 0, flopX: 0, seqT: 0, seqV: -1 },
-      stats: { dmg: 0, hits: 0, maxCombo: 0, perfects: 0, shellBreaks: 0, molts: 0, ults: 0, snails: 0, throws: 0, qteEsc: 0, cav: 0, drinks: 0, demon: 0 },
+      grab: -1, qteEsc: 0, stagger: 0, taunting: 0, sk: [], skill: null,
+      cs: { demon: false, demonDone: false, snails: 3, puru: 'held', puruId: -1, bubbleCd: 0, flail: 1, stuck: 0, hide: 0, flop: 0, flopX: 0, seqT: 0, seqV: -1, fireT: 0, eyesT: 0, armorT: 0, drT: 0, slowT: 0, invisT: 0, muerte: 0, card: -1, skHit: 0 },
+      stats: { dmg: 0, hits: 0, maxCombo: 0, perfects: 0, shellBreaks: 0, molts: 0, ults: 0, snails: 0, throws: 0, qteEsc: 0, cav: 0, drinks: 0, demon: 0, skills: 0, ultQte: 0 },
     };
   }
 
   resetRound(first = false) {
     const s = this.s, st = this.stage, cfg = this.cfg;
-    const prevStats = s.fighters.map((f) => f.stats);
-    const prevMeter = s.fighters.map((f) => f.meter);
+    const prev = s.fighters.slice();
+    const lastW = s.roundWinners.length ? s.roundWinners[s.roundWinners.length - 1] : -1;
     s.fighters = [this.makeFighter(0, cfg.p[0].char, st.spawn[0]), this.makeFighter(1, cfg.p[1].char, st.spawn[1])];
-    s.fighters.forEach((f, i) => { if (prevStats[i]) f.stats = prevStats[i]; f.meter = first ? 0 : prevMeter[i] || 0; });
+    s.fighters.forEach((f, i) => {
+      const p = prev[i];
+      if (!p) return;
+      f.stats = p.stats; f.meter = first ? 0 : p.meter || 0;
+      f.sk = p.sk.map((k) => ({ id: k.id, cd: 0 }));
+      f.qteEsc = p.qteEsc;
+      // SETS: health is saved between sets. The fighter who fell gets back up fresh (new shell),
+      // the set winner (or both, on a draw) keeps the health they finished with.
+      const keep = !first && (lastW === i || lastW < -1);
+      if (keep && p.hp > 0) {
+        f.hp = p.hp; f.shell = Math.max(Math.round(p.shellMax * 0.35), p.shell);
+        if (p.cs.demon) { f.cs.demon = true; f.cs.demonDone = true; f.shellMax = p.shellMax; f.shell = Math.min(f.shell, f.shellMax); }
+        f.cs.demonDone = p.cs.demonDone; f.cs.snails = p.cs.snails;
+      }
+    });
     s.plats = st.plats.map((p, i) => ({ ...p, id: i, broken: false, hp: p.hp || 0, ox: 0 }));
     s.props = [];
     for (const p of st.props) this.addProp(p.type, p.x, p.y, p);
     s.proj = [];
     s.timer = cfg.roundTime ? cfg.roundTime * 60 : PHYS.ROUND_TIME;
-    s.qte = null; s.cine = null; s.dark = 0; s.slow = 0; s.pause = 0; s.winner = -1; s.bartT = 0;
+    s.qte = null; s.cine = null; s.ucine = null; s.dark = 0; s.slow = 0; s.pause = 0; s.winner = -1; s.bartT = 0;
     s.phase = first && !cfg.skipIntro ? 'intro' : 'ready';
     s.pt = 0;
     if (cfg.training) { s.phase = 'fight'; s.timer = 99 * 60; }
-    this.event('roundReset', { round: s.round });
+    this.event('roundReset', { round: s.round, kept: s.fighters.map((f) => f.hp < f.hpMax) });
+    // skill draft
+    if (!cfg.noSkills) {
+      let who = [false, false];
+      if (first) who = cfg.training ? [true, false] : [true, true];
+      else {
+        if (lastW >= 0) who[1 - lastW] = true;
+        const need = this.winsNeeded();
+        if (s.wins[0] === need - 1 && s.wins[1] === need - 1) who = [true, true];
+      }
+      who = who.map((w, i) => w && s.fighters[i].sk.length < 3);
+      if (who.some(Boolean)) this.startPick(who, s.phase);
+    }
+  }
+
+  startPick(who, next) {
+    const s = this.s;
+    const offers = [0, 1].map((i) => {
+      if (!who[i]) return [];
+      const owned = new Set(s.fighters[i].sk.map((k) => k.id));
+      const pool = SKILL_IDS.filter((id) => !owned.has(id));
+      const out = [];
+      while (out.length < 3 && pool.length) out.push(pool.splice(rngInt(s.rng, pool.length), 1)[0]);
+      return out;
+    });
+    s.pick = { who, offers, sel: [1, 1], done: who.map((w) => !w), t: 0, dur: this.cfg.pickTime ?? 720, end: 0, next, fall: s.round > 1 };
+    s.phase = 'pick';
+    this.event('pickStart', { who, offers, round: s.round });
+  }
+  tickPick() {
+    const s = this.s, pk = s.pick;
+    pk.t++;
+    for (const f of s.fighters) { f.sf++; if (f.st !== 'idle') { f.st = 'idle'; f.sf = 0; } }
+    for (let i = 0; i < 2; i++) {
+      if (pk.done[i]) continue;
+      const f = s.fighters[i];
+      const pr = f.inCur & ~f.inPrev;
+      if (pk.t > 24) {
+        if (pr & LEFT) { pk.sel[i] = (pk.sel[i] + pk.offers[i].length - 1) % pk.offers[i].length; this.event('pickMove', { i }); }
+        if (pr & RIGHT) { pk.sel[i] = (pk.sel[i] + 1) % pk.offers[i].length; this.event('pickMove', { i }); }
+        if (pr & (LIGHT | SKILL1 | SKILL2 | SKILL3)) this.confirmPick(i);
+      }
+      if (pk.t >= pk.dur && !pk.done[i]) this.confirmPick(i);
+    }
+    if (pk.done[0] && pk.done[1]) {
+      pk.end++;
+      if (pk.end >= 50) {
+        s.pick = null;
+        // training: keep drafting until all 3 slots are filled
+        if (this.cfg.training && s.fighters[0].sk.length < 3) { this.startPick([true, false], pk.next); return; }
+        s.phase = pk.next; s.pt = 0;
+        this.event('pickEnd', {});
+      }
+    }
+  }
+  confirmPick(i) {
+    const s = this.s, pk = s.pick;
+    const id = pk.offers[i][pk.sel[i]];
+    pk.done[i] = true;
+    if (id) s.fighters[i].sk.push({ id, cd: 0 });
+    this.event('pickDone', { i, id, slot: s.fighters[i].sk.length - 1 });
   }
 
   addProp(type, x, y, o = {}) {
@@ -102,6 +176,8 @@ export class Sim {
       case 'intro': this.phaseIntro(); return;
       case 'ready': this.phaseReady(); return;
       case 'qte': this.tickQte(); return;
+      case 'pick': this.tickPick(); return;
+      case 'ucine': this.tickUltCine(); return;
       case 'finish': this.tickFinish(); return;
       case 'cine': this.tickCine(); return;
       default: break;
@@ -131,6 +207,9 @@ export class Sim {
     if (pr & BLOCK) { f.buf.C = s.frame; f.blockPress = s.frame; }
     if (pr & UP) f.buf.U = s.frame;
     if (pr & DOWN) f.buf.D = s.frame;
+    if (pr & SKILL1) f.buf.S0 = s.frame;
+    if (pr & SKILL2) f.buf.S1 = s.frame;
+    if (pr & SKILL3) f.buf.S2 = s.frame;
     if (pr & fwd) { f.dashF = (s.frame - f.buf.F <= PHYS.DASH_WINDOW && f.rel.F > f.buf.F) ? s.frame : -999; f.buf.F = s.frame; }
     if (pr & back) { f.dashB = (s.frame - f.buf.B <= PHYS.DASH_WINDOW && f.rel.B > f.buf.B) ? s.frame : -999; f.buf.B = s.frame; }
     if (rl & fwd) f.rel.F = s.frame;
@@ -143,8 +222,12 @@ export class Sim {
   buf(f, k, win = PHYS.BUFFER) { return this.s.frame - f.buf[k] <= win; }
   use(f, k) { f.buf[k] = -999; }
   stats(f) {
-    const C = CHARS[f.char];
-    if (f.cs.demon && C.demon) return { ...C, ...C.demon };
+    let C = CHARS[f.char];
+    if (f.cs.demon && C.demon) C = { ...C, ...C.demon };
+    if (f.cs.fireT > 0 || f.cs.slowT > 0) {
+      const m = (f.cs.fireT > 0 ? 1.15 : 1) * (f.cs.slowT > 0 ? 0.8 : 1);
+      C = { ...C, walk: C.walk * m, back: C.back * m, dash: C.dash * m, jumpX: C.jumpX * m, airAcc: C.airAcc * m };
+    }
     return C;
   }
   mv(f, id = f.mv) { return moveFor(f.char, f.cs.demon, id); }
@@ -277,6 +360,7 @@ export class Sim {
     if (m.rand === 'flail') f.cs.flail = 1 + rngInt(this.s.rng, 3);
     if (m.ult) {
       f.meter = 0; f.stats.ults++;
+      f.inv = max(f.inv, m.t[0] + 5); // ultimates are invulnerable on startup
       this.s.pause = 42;
       this.event('ult', { i: f.i, name: m.name, char: f.char, demon: f.cs.demon });
     }
@@ -308,6 +392,14 @@ export class Sim {
     if (f.moltCd > 0) f.moltCd--;
     if (f.soft > 0) f.soft--;
     if (f.cs.bubbleCd > 0) f.cs.bubbleCd--;
+    for (const k of f.sk) if (k.cd > 0) k.cd--;
+    const cs = f.cs;
+    if (cs.fireT > 0) { cs.fireT--; if (cs.fireT === 0) this.event('buffEnd', { i: f.i, kind: 'fire' }); }
+    if (cs.eyesT > 0) { cs.eyesT--; if (cs.eyesT === 0) this.event('buffEnd', { i: f.i, kind: 'eyes' }); }
+    if (cs.armorT > 0) { cs.armorT--; if (cs.armorT === 0) this.event('buffEnd', { i: f.i, kind: 'armor' }); }
+    if (cs.drT > 0) cs.drT--;
+    if (cs.slowT > 0) cs.slowT--;
+    if (cs.invisT > 0) cs.invisT--;
     if (f.drop > 0) f.drop--;
     if (f.wob > 0) f.wob--;
     // drunk system
@@ -439,6 +531,9 @@ export class Sim {
       case 'stuck': if (f.sf >= 30) this.setState(f, 'idle'); break;
       case 'ultAtk': this.tickUltSeq(f); break;
       case 'ultVictim': break;
+      case 'skill': this.tickSkill(f); break;
+      case 'shocked': f.vx *= 0.8; if (f.sf >= f.hitstun) { f.combo = 0; this.toNeutral(f); } break;
+      case 'ucAtk': case 'ucVictim': break;
       case 'demonize': break;
       case 'ko': f.vx *= 0.95; break;
       case 'roundWin': case 'victory': case 'defeat': f.vx *= 0.8; break;
@@ -477,6 +572,7 @@ export class Sim {
     if (this.buf(f, 'C', 3) && (this.held(f, LEFT) || this.held(f, RIGHT)) && f.dodgeCd <= 0) {
       this.use(f, 'C'); f.dodgeDir = this.held(f, RIGHT) ? 1 : -1; f.inv = 12; this.setState(f, 'airdodge'); this.event('dodge', { i: f.i }); return true;
     }
+    if (this.trySkill(f, true)) return true;
     if (this.buf(f, 'H')) { this.use(f, 'H'); return this.startMove(f, 'airH'); }
     if (this.buf(f, 'L')) { this.use(f, 'L'); return this.startMove(f, 'airL'); }
     if (this.buf(f, 'U', 4) && f.airJ > 0 && f.sf > 3) {
@@ -528,6 +624,7 @@ export class Sim {
       this.use(f, 'L'); this.use(f, 'H');
       return this.startMove(f, 'ult');
     }
+    if (this.trySkill(f, false)) return true;
     // throw: light + block together
     if (L && this.buf(f, 'C') && abs(f.buf.L - f.buf.C) <= P.CHORD) {
       this.use(f, 'L'); this.use(f, 'C');
@@ -727,8 +824,9 @@ export class Sim {
       // direct hit check
       const dx = abs(o.x - f.x);
       if (dx < 1.8 && o.y < 1.6 && o.inv <= 0 && o.st !== 'ko') {
-        this.applyHit(f, o, { dmg: 340, sh: 80, hs: 70, bs: 30, stop: 16, kb: [0.12 * (o.x >= f.x ? f.face : -f.face), 0.32], launch: true, lvl: 'mid', unblockable: true, ult: true, fx: 'flop' }, f.face, { x: o.x, y: 0.6 });
+        this.applyHit(f, o, { dmg: 90, sh: 80, hs: 70, bs: 30, stop: 16, kb: [0.12 * (o.x >= f.x ? f.face : -f.face), 0.32], launch: true, lvl: 'mid', unblockable: true, ult: true, fx: 'flop' }, f.face, { x: o.x, y: 0.6 });
         this.event('flatten', { i: o.i });
+        if (s.phase === 'ucine') { f.slammed = false; return; }
       }
       this.spawnProj(f, 'quake', { dmg: 90, big: true });
       f.mf = 200; f.mv = 'ult';
@@ -830,6 +928,12 @@ export class Sim {
       const pl = p.x - p.w / 2 - hw, pr = p.x + p.w / 2 + hw;
       if (nx > pl && nx < pr) { nx = f.x <= p.x ? pl : pr; if (f.st === 'airhit' && abs(f.vx) > 0.15) { this.damageProp(p, 1, f.i); } f.vx = 0; }
     }
+    for (const p of s.proj) {
+      if (p.type !== 'coralWall' || p.owner === f.i) continue;
+      if (f.y >= p.y + p.h - 0.05 || f.y + C.h <= p.y) continue;
+      const pl = p.x - p.w / 2 - hw, pr = p.x + p.w / 2 + hw;
+      if (nx > pl && nx < pr) { nx = f.x <= p.x ? pl : pr; if (f.st === 'airhit' && abs(f.vx) > 0.15) { p.hp--; this.event('coralHit', { id: p.id, x: p.x, y: f.y + 0.8 }); } f.vx = 0; }
+    }
     const L = st.left + hw, R = st.right - hw;
     if (nx < L || nx > R) {
       nx = clamp(nx, L, R);
@@ -881,6 +985,8 @@ export class Sim {
     const [a, b] = this.s.fighters;
     if (a.st === 'thrown' || b.st === 'thrown' || a.st === 'snagged' || b.st === 'snagged' || a.st === 'ultVictim' || b.st === 'ultVictim' || a.st === 'ko' || b.st === 'ko') return;
     if (a.inv > 900 || b.inv > 900) return;
+    if ((a.st === 'skill' && a.skill === 'riptide') || (b.st === 'skill' && b.skill === 'riptide')) return;
+    if (a.st === 'ucAtk' || a.st === 'ucVictim') return;
     const Ca = CHARS[a.char], Cb = CHARS[b.char];
     const overlapY = a.y < b.y + Cb.h * 0.8 && b.y < a.y + Ca.h * 0.8;
     if (!overlapY) return;
@@ -933,12 +1039,14 @@ export class Sim {
       const o = s.fighters[1 - f.i];
       // props can be hit by any attack
       this.hitProps(f, hb);
-      if (o.st === 'ko' || o.st === 'thrown' || o.st === 'ultVictim' || o.st === 'snagged') continue;
+      this.hitSkillObjects(f, hb);
+      if (o.st === 'ko' || o.st === 'thrown' || o.st === 'ultVictim' || o.st === 'snagged' || o.st === 'ucVictim') continue;
       if (o.inv > 0 && !(hb.m.grab && false)) continue;
       if (!this.overlap(hb.box, this.hurtbox(o))) continue;
       hits.push({ f, o, hb });
     }
-    // simultaneous application allows trades
+    // simultaneous application allows trades (but an ultimate always wins a trade)
+    if (hits.length === 2) { const u = hits.findIndex((h) => h.hb.m.ult); if (u >= 0) hits.splice(1 - u, 1); }
     for (const h of hits) {
       const { f, o, hb } = h;
       const m = hb.m;
@@ -963,7 +1071,7 @@ export class Sim {
   // central damage routine. src: attacker fighter (may be null for hazards). dir: knockback direction (+1 right)
   applyHit(f, o, hit, dir, at) {
     const s = this.s;
-    if (o.st === 'ko') return 'none';
+    if (o.st === 'ko' || o.st === 'ucVictim' || o.st === 'ucAtk') return 'none';
     // Jim's mirage counter stance
     if (o.countering && !hit.throwHit && f) {
       o.countering = false;
@@ -978,6 +1086,15 @@ export class Sim {
       if (f) { f.hitstop = 6; f.vx = -dir * 0.06; }
       this.event('block', { a: f ? f.i : -1, d: o.i, x: at.x, y: at.y, perfect: false, cone: true });
       return 'blocked';
+    }
+    // POLARIZED EYES: every blockable hit is perfectly parried while active
+    if (o.cs.eyesT > 0 && !hit.unblockable && !hit.throwHit && !hit.ult && (NEUTRAL.has(o.st) || o.st === 'blockstun' || o.st === 'crouch')) {
+      o.stats.perfects++;
+      o.meter = min(PHYS.METER_MAX, o.meter + 6);
+      this.setState(o, 'block'); o.st = 'blockstun'; o.blockstun = 3; o.hitstop = 6;
+      if (f && f.st === 'attack') { f.hitstop = 8; f.mv = null; this.setState(f, 'stagger'); f.stagger = 18; f.vx = -dir * 0.07; }
+      this.event('perfect', { a: f ? f.i : -1, d: o.i, x: at.x, y: at.y, eyes: true });
+      return 'perfect';
     }
     const blocking = (o.st === 'block' || o.st === 'crouchblock' || o.st === 'blockstun') && o.shell > 0 && !hit.unblockable;
     const crouching = o.st === 'crouchblock' || this.held(o, DOWN);
@@ -1018,9 +1135,14 @@ export class Sim {
     const counter = o.st === 'attack' && this.mv(o) && o.mf < this.mv(o).t[0];
     const punish = o.st === 'attack' && this.mv(o) && o.mf >= this.mv(o).t[0] + this.mv(o).t[1];
     if (counter) dmg = Math.round(dmg * 1.2);
+    if (f && f.cs.fireT > 0) dmg = Math.round(dmg * 1.25);
+    if (f && f.cs.muerte && !hit.proj) { dmg = Math.round(dmg * 1.6); f.cs.muerte = 0; this.event('muerte', { i: f.i, x: at.x, y: at.y }); }
+    if (o.cs.fireT > 0) dmg = Math.round(dmg * 1.1);
+    if (o.cs.drT > 0) dmg = Math.round(dmg * 0.7);
     if (o.st === 'molt') dmg = Math.round(dmg * 1.25);
     // armor absorbs hitstun (Brutus)
-    const armored = o.st === 'attack' && o.armor > 0 && this.mv(o)?.armor && o.mf >= this.mv(o).armor[0] && o.mf <= this.mv(o).armor[1] && !hit.throwHit && !hit.ult;
+    const armored = (o.st === 'attack' && o.armor > 0 && this.mv(o)?.armor && o.mf >= this.mv(o).armor[0] && o.mf <= this.mv(o).armor[1] && !hit.throwHit && !hit.ult)
+      || (o.cs.armorT > 0 && !hit.throwHit && !hit.ult && o.st !== 'ko');
     // combo scaling
     const inCombo = HURT_STATES.has(o.st) && o.st !== 'blockstun' && o.st !== 'dizzy';
     o.combo = inCombo ? o.combo + 1 : 1;
@@ -1046,7 +1168,8 @@ export class Sim {
     }
     o.hp -= dmg;
     if (armored) {
-      o.armor = 0; o.hitstop = hit.stop; if (f) f.hitstop = hit.stop;
+      if (o.cs.armorT <= 0) o.armor = 0;
+      o.hitstop = hit.stop; if (f) f.hitstop = hit.stop;
       this.event('armor', { i: o.i, x: at.x, y: at.y, dmg });
       this.event('hit', { a: f ? f.i : -1, d: o.i, x: at.x, y: at.y, dmg, heavy: hit.heavy, armor: true, combo: o.combo, kb: dir });
       return 'armor';
@@ -1070,12 +1193,7 @@ export class Sim {
     if (hit.bounceOff && f) { f.vy = 0.2; f.mv = null; f.st = 'air'; f.sf = 5; }
     this.event('hit', { a: f ? f.i : -1, d: o.i, x: at.x, y: at.y, dmg, heavy: hit.heavy || dmg >= 70, counter, punish, combo: o.combo, kb: dir, fx: hit.fx, mv: hit.mvId, air, sting: !!hit.sting });
     if (hit.cav && f) this.spawnCav(f, at, hit.cav, false);
-    if (hit.ultSeq && f) {
-      // lock both fighters into the cinematic sequence
-      f.st = 'ultAtk'; f.sf = 0; f.cs.seqT = 0; f.cs.seqV = hit.ultSeq === 'demon' ? 1 : 0; f.vx = 0;
-      o.st = 'ultVictim'; o.sf = 0; o.vx = 0; o.vy = 0;
-      this.event('ultConnect', { a: f.i, d: o.i, kind: hit.ultSeq });
-    }
+    if (hit.ult && f && f.st === 'attack' && f.mv === 'ult' && s.phase === 'fight' && !s.ucine && !this.cfg.noUltCine) this.startUltCine(f, o);
     return 'hit';
   }
 
@@ -1316,6 +1434,7 @@ export class Sim {
         continue;
       }
       if (p.type === 'puru') { this.tickPuru(p, owner, k); continue; }
+      if (p.skill) { this.tickSkillProj(p, owner, k); continue; }
       // motion
       p.vy -= p.g || 0;
       if (p.trap) p.vy = ((s.frame % 60) < 30 ? 0.004 : -0.004);
@@ -1335,7 +1454,7 @@ export class Sim {
       // vs fighters
       const o = s.fighters[1 - p.owner];
       const box = [p.x - p.w / 2, p.x + p.w / 2, p.y - p.h / 2, p.y + p.h / 2];
-      if (o.inv <= 0 && o.st !== 'ko' && o.st !== 'thrown' && o.st !== 'ultVictim' && this.overlap(box, this.hurtbox(o))) {
+      if (o.inv <= 0 && o.st !== 'ko' && o.st !== 'thrown' && o.st !== 'ultVictim' && o.st !== 'ucVictim' && this.overlap(box, this.hurtbox(o))) {
         if (p.trap) {
           if (o.st !== 'bubbled') { o.mv = null; o.st = 'bubbled'; o.sf = 0; o.ground = false; o.plat = -1; o.vx = 0; o.vy = 0.01; o.combo = 0; this.event('trapped', { i: o.i, x: o.x, y: o.y }); }
           this.killProj(k, false); continue;
@@ -1350,6 +1469,10 @@ export class Sim {
       // vs opponent projectiles (clash)
       for (let j = 0; j < s.proj.length; j++) {
         const q = s.proj[j];
+        if (q.skill && q.type !== 'coralWall' && q.type !== 'sonic') continue;
+        if (q.type === 'coralWall' && q.owner !== p.owner && abs(q.x - p.x) < (q.w + p.w) / 2 && p.y < q.y + q.h && p.y > q.y - 0.2) { p.life = 0; q.hp--; this.event('coralHit', { id: q.id, x: q.x, y: p.y }); continue; }
+        if (q.type === 'sonic' && q.owner !== p.owner && abs(q.x - p.x) < (q.w + p.w) / 2 && abs(q.y - p.y) < (q.h + p.h) / 2 && p.type !== 'quake') { p.owner = q.owner; p.vx = -p.vx * 1.2; p.face = -p.face; this.event('reflect', { x: p.x, y: p.y }); continue; }
+        if (q.type === 'coralWall' || q.type === 'sonic') continue;
         if (q === p || q.owner === p.owner || q.type === 'cav' || q.quake || p.quake) continue;
         if (abs(q.x - p.x) < (q.w + p.w) / 2 && abs(q.y - p.y) < (q.h + p.h) / 2) {
           this.event('clash', { x: (p.x + q.x) / 2, y: (p.y + q.y) / 2 });
@@ -1620,6 +1743,270 @@ export class Sim {
     const p = this.addProp(rngChance(s.rng, 0.5) ? 'mug' : 'bottle', 11.6, B.spawnY);
     p.state = 'slide'; p.vx = r4(-0.07 - rngFloat(s.rng) * 0.04);
     this.event('bartenderSlide', { id: p.id });
+  }
+
+  // ------------------------------------------------------------------ skills
+  trySkill(f, air) {
+    const s = this.s;
+    for (let j = 0; j < 3; j++) {
+      if (s.frame - f.buf['S' + j] > PHYS.BUFFER) continue;
+      const k = f.sk[j];
+      this.use(f, 'S' + j);
+      if (!k) { this.event('skillEmpty', { i: f.i, slot: j }); return false; }
+      const S = SKILLS[k.id];
+      if (k.cd > 0) { this.event('skillCd', { i: f.i, slot: j }); return false; }
+      if (air && !S.air) { this.event('skillCd', { i: f.i, slot: j, air: true }); return false; }
+      if (f.held >= 0) this.dropHeld(f);
+      k.cd = S.cd;
+      f.st = 'skill'; f.sf = 0; f.skill = k.id; f.mv = null; f.skAir = !f.ground; f.cs.skHit = 0;
+      f.stats.skills++;
+      this.event('skill', { i: f.i, id: k.id, slot: j, x: f.x, y: f.y, name: S.name });
+      return true;
+    }
+    return false;
+  }
+
+  tickSkill(f) {
+    const s = this.s, o = s.fighters[1 - f.i], sf = f.sf, id = f.skill, S = SKILLS[id];
+    if (!S) { this.toNeutral(f); return; }
+    if (!f.skAir) f.vx *= 0.75;
+    const front = (d) => clamp(f.x + f.face * d, this.stage.left + 0.4, this.stage.right - 0.4);
+    switch (id) {
+      case 'mine':
+        if (sf === 10) {
+          for (let k = s.proj.length - 1; k >= 0; k--) if (s.proj[k].type === 'mine' && s.proj[k].owner === f.i) this.killProj(k, true);
+          this.spawnSkillProj(f, 'mine', { x: front(0.55), y: f.y + 0.2, w: 0.8, h: 0.7, life: 420, arm: 20 });
+        }
+        break;
+      case 'riptide':
+        if (sf === 3) { f.inv = 20; this.event('riptide', { i: f.i, x: f.x, y: f.y }); }
+        if (sf >= 3 && sf < 18) {
+          f.vx = f.face * 0.4; if (f.skAir) f.vy = 0;
+          if (!f.cs.skHit && abs(o.x - f.x) < 0.55 && abs(o.y - f.y) < 1.2 && o.inv <= 0 && o.st !== 'ko' && !HURT_STATES.has('x')) {
+            f.cs.skHit = 1;
+            this.applyHit(f, o, { dmg: 55, sh: 10, hs: 40, bs: 14, stop: 8, kb: [-0.04, 0.2], lvl: 'mid', launch: true, unblockable: true, fx: 'riptide', skill: true }, f.face, { x: o.x, y: o.y + 0.9 });
+          }
+        }
+        if (sf >= 22) { f.face = o.x > f.x ? 1 : -1; this.toNeutral(f); }
+        return;
+      case 'habanero':
+        if (sf === 22) { f.cs.fireT = 360; this.event('habanero', { i: f.i, x: f.x, y: f.y }); }
+        break;
+      case 'eyes':
+        if (sf === 8) { f.cs.eyesT = 180; this.event('eyes', { i: f.i, x: f.x, y: f.y }); }
+        break;
+      case 'coral':
+        if (sf === 12) {
+          for (let k = s.proj.length - 1; k >= 0; k--) if (s.proj[k].type === 'coralWall' && s.proj[k].owner === f.i) this.killProj(k, true);
+          this.spawnSkillProj(f, 'coralWall', { x: front(1.05), y: 0, w: 0.55, h: 1.9, life: 300, hp: 4 });
+        }
+        break;
+      case 'hook':
+        if (sf === 9) this.spawnSkillProj(f, 'hook', { x: f.x + f.face * 0.6, y: f.y + 1.0, vx: f.face * 0.34, w: 0.5, h: 0.5, life: 24 });
+        if (f.skAir) f.vy = max(f.vy, -0.02);
+        break;
+      case 'loteria':
+        if (sf === 16) {
+          const card = rngInt(s.rng, LOTERIA.length);
+          f.cs.card = card;
+          if (card === 0) { const h = Math.round(f.hpMax * 0.12); f.hp = min(f.hpMax, f.hp + h); this.event('heal', { i: f.i, amt: h }); }
+          if (card === 1) f.cs.muerte = 1;
+          if (card === 2) f.cs.armorT = 240;
+          if (card === 3) f.meter = min(PHYS.METER_MAX, f.meter + 35);
+          if (card === 4) { o.wob = 200; this.event('voice', { i: o.i, line: 'oops' }); }
+          if (card === 5) { f.shell = f.shellMax; f.soft = 0; }
+          this.event('loteria', { i: f.i, card, x: f.x, y: f.y });
+        }
+        break;
+      case 'hermit':
+        if (sf === 12) { f.cs.armorT = 240; f.cs.drT = 240; f.cs.slowT = 240; this.event('hermit', { i: f.i, x: f.x, y: f.y }); }
+        break;
+      case 'decoy':
+        if (sf === 1) {
+          const x0 = f.x, y0 = f.y;
+          this.spawnSkillProj(f, 'husk', { x: x0, y: y0, w: 0.6, h: CHARS[f.char].h, life: 240, hp: 1, face: f.face });
+          const hw = CHARS[f.char].w / 2;
+          let nx = o.x - o.face * 1.15;
+          if (nx < this.stage.left + hw || nx > this.stage.right - hw) nx = o.x + o.face * 1.15;
+          f.x = r4(clamp(nx, this.stage.left + hw, this.stage.right - hw)); f.y = max(0, o.y);
+          f.face = o.x > f.x ? 1 : -1; f.inv = 24; f.cs.invisT = 26; f.vx = 0; f.vy = 0;
+          if (f.y > 0) { f.ground = false; f.skAir = true; }
+          this.event('decoy', { i: f.i, x0, y0, x: f.x, y: f.y });
+        }
+        if (sf >= 8) { this.toNeutral(f); }
+        return;
+      case 'eel':
+        if (sf === 8) this.event('eel', { i: f.i, x: f.x, y: f.y });
+        if (f.skAir) f.vy = max(f.vy, -0.01);
+        if (sf >= 10 && sf <= 18 && !f.cs.skHit) {
+          const dx = o.x - f.x, dy = (o.y + 0.8) - (f.y + 0.8);
+          if (dx * dx + dy * dy < 1.6 * 1.6 && o.inv <= 0 && o.st !== 'ko') {
+            f.cs.skHit = 1;
+            const r = this.applyHit(f, o, { dmg: 70, sh: 28, hs: 44, bs: 16, stop: 10, kb: [0.06, 0.05], lvl: 'mid', fx: 'eel', skill: true, heavy: true }, dx >= 0 ? 1 : -1, { x: o.x, y: o.y + 0.9 });
+            if (r === 'hit' && o.st === 'hitstun') { o.st = 'shocked'; o.sf = 0; }
+          }
+        }
+        break;
+      case 'mariachi':
+        if (sf === 12) this.spawnSkillProj(f, 'sonic', { x: f.x + f.face * 0.8, y: f.y + 0.9, vx: f.face * 0.2, w: 0.9, h: 1.9, life: 46, dmg: 30 });
+        break;
+      case 'pinata':
+        if (sf === 10) this.spawnSkillProj(f, 'pinataBomb', { x: f.x + f.face * 0.5, y: f.y + 1.3, vx: f.face * (0.1 + abs(o.x - f.x) * 0.012), vy: 0.2, g: 0.012, w: 0.55, h: 0.6, life: 150 });
+        break;
+      default: break;
+    }
+    if (sf >= S.t) this.toNeutral(f);
+  }
+
+  spawnSkillProj(f, type, o) {
+    const s = this.s;
+    const p = { id: s.nextId++, type, owner: f.i, x: o.x, y: o.y, vx: o.vx || 0, vy: o.vy || 0, g: o.g || 0, life: o.life || 120, w: o.w || 0.5, h: o.h || 0.5, dmg: o.dmg || 0, hp: o.hp || 0, hitCd: 0, bounces: 0, state: 'fly', data: 0, face: o.face ?? f.face, skill: true, arm: o.arm || 0, t: 0 };
+    s.proj.push(p);
+    this.event('projSpawn', { id: p.id, type, i: f.i, x: p.x, y: p.y, data: 0 });
+    return p;
+  }
+
+  tickSkillProj(p, owner, k) {
+    const s = this.s, st = this.stage, o = s.fighters[1 - p.owner];
+    p.t++;
+    const box = () => [p.x - p.w / 2, p.x + p.w / 2, p.y - (p.type === 'coralWall' || p.type === 'husk' ? 0 : p.h / 2), p.y + (p.type === 'coralWall' || p.type === 'husk' ? p.h : p.h / 2)];
+    const touch = () => o.inv <= 0 && o.st !== 'ko' && o.st !== 'thrown' && o.st !== 'ucVictim' && this.overlap(box(), this.hurtbox(o));
+    switch (p.type) {
+      case 'mine': {
+        if (p.t > p.arm && touch()) { this.mineBoom(p, k, owner, o); return; }
+        if (p.life <= 0) { this.mineBoom(p, k, owner, o); return; }
+        return;
+      }
+      case 'coralWall':
+        if (p.life <= 0 || p.hp <= 0) { this.killProj(k, true); return; }
+        return;
+      case 'husk':
+        if (p.life <= 0) { this.killProj(k, true); return; }
+        if (p.hp <= 0) {
+          this.event('huskBoom', { id: p.id, x: p.x, y: p.y + 0.8 });
+          const dx = o.x - p.x;
+          if (abs(dx) < 1.2 && o.inv <= 0 && o.st !== 'ko') this.applyHit(owner, o, { dmg: 45, sh: 15, hs: 22, bs: 12, stop: 8, kb: [0.12, 0.16], lvl: 'mid', launch: true, fx: 'husk', proj: true, skill: true }, dx >= 0 ? 1 : -1, { x: o.x, y: o.y + 0.9 });
+          this.killProj(k, false);
+        }
+        return;
+      case 'hook': {
+        p.x += p.vx;
+        if (p.x < st.left || p.x > st.right || p.life <= 0) { this.killProj(k, true); return; }
+        if (touch()) {
+          const res = this.applyHit(owner, o, { dmg: 35, sh: 12, hs: 34, bs: 12, stop: 8, kb: [-0.27, 0.07], lvl: 'mid', fx: 'hook', proj: true, skill: true }, p.vx >= 0 ? 1 : -1, { x: p.x, y: p.y });
+          this.event('hookHit', { id: p.id, i: p.owner, x: p.x, y: p.y, res });
+          this.killProj(k, false);
+        }
+        return;
+      }
+      case 'sonic':
+        p.x += p.vx;
+        if (p.life <= 0 || p.x < st.left || p.x > st.right) { this.killProj(k, true); return; }
+        if (!p.hitDone && touch()) {
+          p.hitDone = true;
+          this.applyHit(owner, o, { dmg: 30, sh: 22, hs: 24, bs: 16, stop: 6, kb: [0.34, 0.14], lvl: 'mid', launch: true, wallBounce: true, fx: 'sonic', proj: true, skill: true }, p.vx >= 0 ? 1 : -1, { x: o.x, y: o.y + 1 });
+        }
+        return;
+      case 'pinataBomb': {
+        p.vy -= p.g; p.x += p.vx; p.y += p.vy;
+        p.x = r4(p.x); p.y = r4(p.y); p.vy = r4(p.vy);
+        let boom = p.life <= 0 || touch() || p.y <= 0.3 || p.x < st.left || p.x > st.right;
+        for (const pl of s.plats) if (!pl.broken && p.vy < 0 && p.x > pl.x0 && p.x < pl.x1 && abs(p.y - pl.y) < 0.2) boom = true;
+        if (boom) {
+          this.event('pinataBoom', { id: p.id, x: p.x, y: max(0.3, p.y) });
+          const dx = o.x - p.x, dy = (o.y + 0.8) - p.y;
+          if (dx * dx + dy * dy < 1.5 * 1.5 && o.inv <= 0 && o.st !== 'ko') this.applyHit(owner, o, { dmg: 70, sh: 24, hs: 28, bs: 14, stop: 9, kb: [0.12, 0.22], lvl: 'mid', launch: true, heavy: true, fx: 'pinata', proj: true, skill: true }, dx >= 0 ? 1 : -1, { x: o.x, y: o.y + 0.9 });
+          for (let i = 0; i < 2; i++) this.addProp('snail', p.x, max(0.3, p.y), { vx: (rngFloat(s.rng) - 0.5) * 0.16, vy: 0.1 + rngFloat(s.rng) * 0.08 }).state = 'fly';
+          this.killProj(k, false);
+        }
+        return;
+      }
+      default:
+        if (p.life <= 0) this.killProj(k, true);
+    }
+  }
+  mineBoom(p, k, owner, o) {
+    this.event('mineBoom', { id: p.id, x: p.x, y: p.y, i: p.owner });
+    const dx = o.x - p.x, dy = (o.y + 0.6) - p.y;
+    if (dx * dx + dy * dy < 1.3 * 1.3 && o.inv <= 0 && o.st !== 'ko') this.applyHit(owner, o, { dmg: 90, sh: 30, hs: 30, bs: 16, stop: 10, kb: [0.1, 0.26], lvl: 'mid', launch: true, heavy: true, fx: 'cav', proj: true, skill: true }, dx >= 0 ? 1 : -1, { x: p.x, y: p.y + 0.4 });
+    for (const q of this.s.props) this.propInRadius(q, p.x, p.y, 1.2, p.owner, 2);
+    this.killProj(k, false);
+  }
+  hitSkillObjects(f, hb) {
+    for (const p of this.s.proj) {
+      if (!p.skill || p.owner === f.i) continue;
+      if (p.type !== 'coralWall' && p.type !== 'husk') continue;
+      if (p.hitCd > 0) { p.hitCd--; continue; }
+      const box = [p.x - p.w / 2, p.x + p.w / 2, p.y, p.y + p.h];
+      if (!this.overlap(hb.box, box)) continue;
+      p.hp -= hb.m.dmg >= 70 ? 2 : 1; p.hitCd = 10;
+      f.hitstop = max(f.hitstop, 4);
+      this.event(p.type === 'coralWall' ? 'coralHit' : 'huskHit', { id: p.id, x: p.x, y: f.y + 1 });
+    }
+  }
+
+  // ------------------------------------------------------------------ cinematic ultimate (with QTE)
+  startUltCine(f, o) {
+    const s = this.s, U = ULT_CINE;
+    s.ucine = { a: f.i, d: o.i, t: 0, char: f.cs.demon ? 'demon' : f.char, btns: U.steps.map(() => rngInt(s.rng, 3)), res: U.steps.map(() => 0), good: 0, mash: 0, done: false, dmg: 0, x: o.x };
+    s.phase = 'ucine';
+    f.st = 'ucAtk'; f.sf = 0; f.mv = null; f.vx = 0; f.vy = 0; f.hitstop = 0;
+    o.st = 'ucVictim'; o.sf = 0; o.mv = null; o.vx = 0; o.vy = 0; o.hitstop = 0; o.held >= 0 && this.dropHeld(o);
+    f.stats.ults = f.stats.ults || 0;
+    this.event('ucStart', { a: f.i, d: o.i, char: s.ucine.char, btns: s.ucine.btns });
+  }
+  tickUltCine() {
+    const s = this.s, c = s.ucine, U = ULT_CINE;
+    if (!c) { s.phase = 'fight'; return; }
+    c.t++;
+    const A = s.fighters[c.a], D = s.fighters[c.d];
+    A.sf++; D.sf++;
+    // keep them grounded and facing
+    const hw = CHARS[D.char].w / 2;
+    A.face = D.x >= A.x ? 1 : -1;
+    const btn = [LIGHT, HEAVY, BLOCK];
+    const prA = A.inCur & ~A.inPrev, prD = D.inCur & ~D.inPrev;
+    const red = () => 1 - min(0.3, c.mash * 0.01);
+    for (let i = 0; i < U.steps.length; i++) {
+      if (c.res[i]) continue;
+      const at = U.steps[i];
+      if (c.t < at - U.window) break;
+      let r = 0;
+      if (c.t <= at + U.window && (prA & (LIGHT | HEAVY | BLOCK))) r = (prA & btn[c.btns[i]]) ? 1 : -1;
+      if (!r && c.t > at + U.window) r = -1;
+      if (!r && this.cfg.cpuUlt?.[A.i]) { if (c.t === at - 2) r = rngChance(s.rng, 0.6) ? 1 : -1; }
+      if (r) {
+        c.res[i] = r;
+        if (r > 0) c.good++;
+        const dmg = Math.round((r > 0 ? U.good : U.bad) * red());
+        D.hp = max(1, D.hp - dmg); c.dmg += dmg;
+        A.stats.dmg += dmg; A.stats.hits++;
+        this.event('ucHit', { k: i, good: r > 0, a: A.i, d: D.i, dmg, x: D.x, y: D.y + 1 });
+      }
+      break;
+    }
+    if (prD & (LIGHT | HEAVY | BLOCK)) { c.mash = min(40, c.mash + 1); if (c.mash % 5 === 0) this.event('ucMash', { i: D.i, mash: c.mash }); }
+    if (this.cfg.cpuUlt?.[D.i] && s.frame % 9 === 0) c.mash = min(40, c.mash + 1);
+    if (c.t === U.final) {
+      const dmg = Math.round((U.finalBase + U.finalPer * c.good) * red());
+      c.dmg += dmg; A.stats.dmg += min(dmg, D.hp);
+      if (c.good === U.steps.length) A.stats.ultQte = (A.stats.ultQte || 0) + 1;
+      this.event('ucFinal', { a: A.i, d: D.i, dmg, good: c.good, total: c.dmg, x: D.x, y: D.y + 1, char: c.char, perfect: c.good === U.steps.length });
+      if (D.hp - dmg <= 0) {
+        D.hp = 0; s.ucine = null; s.phase = 'fight';
+        this.setState(A, 'idle');
+        this.doKO(A, D, A.face);
+        return;
+      }
+      D.hp -= dmg;
+    }
+    if (c.t >= U.dur) {
+      s.ucine = null; s.phase = 'fight';
+      this.setState(A, 'idle'); A.inv = 10;
+      D.st = 'airhit'; D.sf = 0; D.hitstun = 50; D.launched = true; D.vx = A.face * 0.22; D.vy = 0.24; D.ground = false; D.plat = -1; D.combo = 0;
+      D.x = r4(clamp(D.x, this.stage.left + hw, this.stage.right - hw));
+      this.event('ucEnd', { a: A.i, d: D.i, total: c.dmg, good: c.good });
+    }
   }
 
   // ------------------------------------------------------------------ util

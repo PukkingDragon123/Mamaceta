@@ -1,0 +1,1 @@
+export class BarScene { constructor() { this.bounds = { left: -10, right: 10, bottom: -1.6, top: 10 }; this.cams = { overview: { x: 0, y: 4, zoom: 1 } }; this.spots = {}; } update() {} drawBack() {} drawMid() {} drawFront() {} setDoor() {} setSecretDoor() {} }

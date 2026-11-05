@@ -1,6 +1,5 @@
 // Game shell: owns renderer, UI, input, save; runs the main loop and screen stack/transitions.
-import * as THREE from 'three';
-import { Renderer } from './render/renderer.js';
+import { Display } from './px/display.js';
 import { UI } from './ui/ui.js';
 import { Input } from './core/input.js';
 import { Save } from './core/save.js';
@@ -13,7 +12,7 @@ export class Game {
   constructor() {
     this.glCanvas = document.getElementById('gl');
     this.uiCanvas = document.getElementById('ui');
-    this.renderer = new Renderer(this.glCanvas);
+    this.display = new Display(this.glCanvas);
     this.ui = new UI(this.uiCanvas);
     this.input = new Input();
     this.touch = new TouchControls(this.ui, this.input);
@@ -36,7 +35,6 @@ export class Game {
     if (q) s.quality = q;
     Sound.setVolumes({ master: s.master, music: s.music, sfx: s.sfx });
     this.input.setBindings(s.bindings);
-    this.renderer.setQuality(s.quality);
   }
 
   start(firstScreen) {
@@ -100,10 +98,10 @@ export class Game {
       try {
         scr.update?.(dt, !this.trans);
       } catch (e) { this.crash(e); }
-      this.renderer.update(dt);
-      if (scr.scene && scr.camera) {
-        try { this.renderer.render(scr.scene, scr.camera); scr.postRender?.(this.renderer); } catch (e) { this.crash(e); }
-      }
+      try {
+        if (scr.render) scr.render(this.display, dt);
+        else this.display.clearScreen();
+      } catch (e) { this.crash(e); }
       this.ui.begin(dt);
       try { scr.drawUI?.(this.ui, dt); } catch (e) { this.crash(e); }
     } else {
@@ -189,10 +187,3 @@ export class Game {
   }
 }
 
-// convenience: create a basic underwater scene shell
-export function makeScene(fogColor = 0x0a3a4a, density = 0.035) {
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color(fogColor);
-  scene.fog = new THREE.FogExp2(fogColor, density);
-  return scene;
-}

@@ -1,7 +1,6 @@
-// Title screen + main menu inside the algae-covered locker room.
-import * as THREE from 'three';
-import { ensureLocker, lockerFighters, goCharSelect, goShop, goSettings, goOnline } from './flow.js';
-import { LOCKER_SLOTS } from '../render/stages/lockerroom.js';
+// Title screen + main menu inside the underwater dive bar. The camera tours the bar
+// cinematically, gliding between the fighters as they hang out.
+import { ensureLobby, lobbyFighters, goCharSelect, goShop, goSettings, goOnline } from './flow.js';
 import { P, PLAYER_COLORS } from '../ui/palette.js';
 import { snailCounter, rankPlaque, hintBar } from '../ui/widgets.js';
 import { Save, CHARS } from '../core/save.js';
@@ -19,7 +18,11 @@ const TIPS = [
   'Hold HEAVY to wind up a spring-loaded charge punch. Fully charged ones wall-splat!',
   'LIGHT, LIGHT, HEAVY is a combo for every fighter. Try it!',
   'Low attacks must be blocked crouching. Jump attacks must be blocked standing.',
-  'When your ultimate meter is full press LIGHT + HEAVY together.',
+  'When your ultimate meter is full press LIGHT + HEAVY together, then hit the prompts in the cutscene!',
+  'Skills: pick one at the start of a match. If you lose a set you get another one!',
+  'Health carries over between sets. Win a set big to stay ahead.',
+  'P1 skills: R T Y.  P2 skills: I O P.  Gamepad: LB RB LT.',
+  'Loteria draws a random card. La Muerte makes your next hit brutal.',
   'Bobby is weak... until his cone cracks.',
   'In the Cantina, grab a drink with LIGHT + BLOCK and gulp it with HEAVY. Not too many!',
   'Hit the vents in the Rust Pit to make a bubble geyser you can ride.',
@@ -46,34 +49,34 @@ function drawTitleSign(ui, cx, y, t, scale = 1) {
 export class TitleScreen {
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.F = lockerFighters(g);
-    for (const c of CHARS) { this.F[c].setVisible(true); this.F[c].setSlot(LOCKER_SLOTS.select[c]); }
-    this.L.setCam([-2.4, 3.2, 8.2], [-2.6, 1.6, -3.2], 42, 0.8);
-    this.L.snapCam();
-    this.L.setCam([-2.4, 2.6, 6.8], [-2.6, 1.4, -3.2], 40, 0.25);
-    this.t = 0;
+    this.L = ensureLobby();
+    this.F = lobbyFighters();
+    this.L.homeAll();
+    this.L.snapCam('overview');
+    this.t = 0; this.leg = -1;
     Sound.music('title', { fade: 2 });
   }
   update(dt, active) {
     this.t += dt;
+    // slow cinematic sweep across the bar, one leg per fighter
+    const legs = ['jim', 'brutus', 'bobby', 'mimi', 'overview'];
+    const leg = Math.floor(this.t / 5.5) % legs.length;
+    if (leg !== this.leg) { this.leg = leg; this.L.setCam(legs[leg], 3.2, { zk: legs[leg] === 'overview' ? 1 : 0.75, drift: 0.08 }); }
     this.L.update(dt);
-    for (const c of CHARS) this.F[c].update(dt, { look: this.L.camera.position });
-    if (this.F.jim.punch) { this.L.punchBag(this.F.jim.punch === 2 ? 1.6 : 0.8); this.F.jim.punch = 0; }
     const inp = this.game.input;
     if (active && this.t > 0.6 && (inp.anyPressed || this.game.ui.mouse.clicked)) {
       Sound.resume(); Sound.sfx('ui_select');
       this.game.setScreen(new MainMenuScreen({ fromTitle: true }), { instant: true });
     }
   }
+  render(d) { this.L.render(d, { dim: 0.1 }); }
   drawUI(ui) {
     const t = this.t;
     const drop = Math.round((1 - ease.outBounce(clamp(t / 1.2, 0, 1))) * -160);
     drawTitleSign(ui, Math.floor(ui.w / 2), 20 + drop, t);
-    ui.text('an underwater mantis shrimp fight club', ui.w / 2, 124 + drop, { font: 'body', align: 'center', color: P.teal5 });
+    ui.text('an underwater mantis shrimp fight club', ui.w / 2, 124 + drop, { font: 'body', align: 'center', color: P.teal5, shadow: P.ink });
     if (t > 1.2 && Math.floor(t * 2) % 2 === 0) ui.text('PRESS ANY KEY', ui.w / 2, ui.h - 40, { font: 'big', align: 'center', color: P.cream4, shadow: P.ink });
-    ui.text('v1.0  -  P1: WASD + F G H   P2: ARROWS + K L ;  -  gamepads welcome', ui.w / 2, ui.h - 12, { font: 'label', align: 'center', color: P.cream1 });
+    ui.text('v2.0  -  P1: WASD + F G H, skills R T Y   P2: ARROWS + K L ;, skills I O P', ui.w / 2, ui.h - 12, { font: 'label', align: 'center', color: P.cream2, shadow: P.ink });
   }
 }
 
@@ -81,15 +84,14 @@ export class MainMenuScreen {
   constructor(o = {}) { this.o = o; this.sel = 0; }
   enter() {
     const g = this.game;
-    this.L = ensureLocker(g);
-    this.scene = this.L.scene; this.camera = this.L.camera;
-    this.F = lockerFighters(g);
+    this.L = ensureLobby();
+    this.F = lobbyFighters();
     this.main = Save.data.mainFighter;
-    this.placeFighters();
-    this.L.molt.group.visible = false; this.L.moltOpenTarget = 0;
-    for (const d of this.L.doors) d.target = 0;
-    this.L.setCam([-3.9, 1.7, 0.9], [-3.35, 1.05, -4.3], 40, 1.6);
-    if (!this.o.fromTitle) this.L.snapCam();
+    this.L.homeAll();
+    this.L.bar.setSecretDoor?.(0);
+    this.L.bar.setDoor?.(0, 0); this.L.bar.setDoor?.(1, 0);
+    this.tourT = 0; this.focus = this.main;
+    this.L.setCam(this.main, this.o.fromTitle ? 1.6 : 0.01, { drift: 0.06 });
     this.t = 0;
     this.items = [
       { label: 'LOCAL VERSUS', icon: 'keyboard', fn: () => goCharSelect(g, 'local') },
@@ -105,17 +107,12 @@ export class MainMenuScreen {
     Sound.music('menu', { fade: 1.5 });
     this.changeT = 0;
   }
-  placeFighters() {
-    for (const c of CHARS) this.F[c].setVisible(c === this.main);
-    const f = this.F[this.main];
-    f.setSlot(LOCKER_SLOTS.bench);
-    f.setActivity({ jim: 'read', brutus: 'eat', bobby: 'balance', mimi: 'puru' }[this.main]);
-  }
   switchMain(dir) {
     const i = (CHARS.indexOf(this.main) + dir + CHARS.length) % CHARS.length;
     this.main = CHARS[i];
     Save.data.mainFighter = this.main; Save.markDirty();
-    this.placeFighters();
+    this.focus = this.main; this.tourT = 0;
+    this.L.setCam(this.main, 1.1, { drift: 0.06 });
     this.F[this.main].doReact('wave');
     Sound.sfx('ui_tab'); this.changeT = 0.3;
     this.say(line(this.main, 'select'));
@@ -123,9 +120,17 @@ export class MainMenuScreen {
   say(txt) { if (!txt) return; this.speech = txt; this.speechT = 0; Sound.voice(this.main, txt); }
   update(dt, active) {
     this.t += dt; this.changeT = Math.max(0, this.changeT - dt);
+    // cinematic tour: after a while the camera drifts to visit the other fighters, then returns
+    this.tourT += dt;
+    if (this.tourT > 7.5) {
+      this.tourT = 0;
+      const others = CHARS.filter((c) => c !== this.focus);
+      this.focus = this.focus === this.main ? others[Math.floor(Math.random() * others.length)] : this.main;
+      this.L.setCam(this.focus, 2.4, { drift: 0.07, zk: this.focus === this.main ? 1 : 0.9 });
+      if (this.focus !== this.main && Math.random() < 0.5) this.F[this.focus].doReact('wave');
+    }
     this.L.update(dt);
     const f = this.F[this.main];
-    f.update(dt, { look: this.L.camera.position });
     this.tipT += dt; if (this.tipT > 7) { this.tipT = 0; this.tip = (this.tip + 1) % TIPS.length; }
     this.speechT += dt; this.nextSpeech -= dt;
     if (this.nextSpeech <= 0) { this.nextSpeech = 12 + Math.random() * 10; this.say(line(this.main, Math.random() < 0.5 ? 'taunt' : 'intro')); }
@@ -143,6 +148,7 @@ export class MainMenuScreen {
       if (ui.mouse.x > ui.w * 0.45 && ui.mouse.x < ui.w * 0.8 && ui.mouse.y > ui.h * 0.3) { f.doReact('wave'); this.say(line(this.main, 'taunt')); }
     }
   }
+  render(d) { this.L.render(d); this.d = d; }
   activate(i) {
     Sound.sfx('ui_select');
     this.F[this.main].doReact('pick');
@@ -176,11 +182,10 @@ export class MainMenuScreen {
     ui.icon('arrowL', bx - 15, by + 7); ui.icon('arrowR', bx + bw + 9, by + 7);
     if (l.clicked) this.switchMain(-1); if (r.clicked) this.switchMain(1);
     // speech bubble near the bench fighter
-    if (this.speech && this.speechT < 3.5) {
-      const hp = this.F[this.main].rig.headWorld(new THREE.Vector3());
-      hp.y += 0.5;
-      hp.project(this.camera);
-      const px = Math.round((hp.x * 0.5 + 0.5) * ui.w), py = Math.round((1 - (hp.y * 0.5 + 0.5)) * ui.h);
+    if (this.speech && this.speechT < 3.5 && this.d && this.focus === this.main) {
+      const hp = this.F[this.main].headPos();
+      const pp = this.d.toUI(hp.x, hp.y + 0.6, ui);
+      const px = Math.round(pp.x), py = Math.round(pp.y);
       const txt = this.speech.slice(0, Math.floor(this.speechT * 40));
       const lines = ui.wrap(txt, 130, 'body');
       const w = Math.max(...lines.map((s) => ui.measure(s, 'body'))) + 10, h = lines.length * 9 + 7;

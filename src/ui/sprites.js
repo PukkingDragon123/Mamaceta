@@ -385,6 +385,24 @@ icon('fire', 9, 10, (pc, ox, oy) => {
   pc.art(['....r....', '...rr....', '...rOr...', '..rOOr.r.', '.rOOYOrr.', '.rOYYYOr.', 'rOYYWYYOr', 'rOYWWWYOr', '.rOYYYOr.', '..rrrrr..'], { r: P.red3, O: P.orange3, Y: P.gold3, W: P.gold4 }, ox, oy);
 });
 
+
+// ---- skill icons (12x12)
+const SKI = {
+  mine: [['....w..w....', '.w..bbbb..w.', '...bBBBBb...', '..bBWBBBBb..', 'w.bBWBBBBb.w', '..bBBBBBBb..', '..bBBBBBBb..', 'w.bBBBBBBb.w', '...bBBBBb...', '.w..bbbb..w.', '....w..w....', '............'], { b: P.teal3, B: P.teal4, W: P.white, w: P.teal5 }],
+  wave: [['......bbb...', '....bbBBBb..', '...bBBWWBBb.', '..bBB...bBb.', '.bBB.....b..', 'bBB...bb....', 'bB...bBBb...', 'bB..bBWBBb..', 'bBbbBBBBBBb.', '.bBBBBBBBBBb', '..bbbbbbbbb.', '............'], { b: P.teal2, B: P.teal4, W: P.white }],
+  chili: [['.....gg.....', '....gG......', '...rrr......', '..rRRRr.....', '..rRWRRr....', '..rRRRRRr...', '...rRRRRRr..', '....rRRRRRr.', '.....rrRRRr.', '.......rrRr.', '.........rr.', '............'], { g: P.green3, G: P.algae4, r: P.red2, R: P.red3, W: P.red5 }],
+  eye: [['.p....p....p', '..p...p...p.', '....vvvvv...', '..vvwwwwwvv.', '.vwwkkkkwwv.', 'vwwkkPPkkwwv', '.vwwkkkkwwv.', '..vvwwwwwvv.', '....vvvvv...', '..p...p...p.', '.p....p....p', '............'], { p: P.purple4, v: P.purple3, w: P.white, k: P.purple1, P: P.pink3 }],
+  coral: [['...r....r...', '..rR.r.rR...', '..rR.rRrR.r.', '...rRrRR.rR.', '.r..rRRr.rR.', '.rR.rRRrrR..', '..rRrRRRR...', '...rRRRr....', '....rRR.....', '....rRR.....', '..sssssss...', '.sSSSSSSSs..'], { r: P.red3, R: P.orange4, s: P.wood3, S: P.wood5 }],
+  hook: [['.....mm.....', '....m..m....', '.....mm.....', '.....MM.....', '...MMMMMM...', '.....MM.....', '.....MM.....', '.M...MM...M.', '.MM..MM..MM.', '..MM.MM.MM..', '...MMMMMM...', '....MMMM....'], { m: P.metal3, M: P.metal4 }],
+  card: [['.cccccccccc.', '.cYYYYYYYYc.', '.cY.rrrr.Yc.', '.cY.rWRr.Yc.', '.cY.rRRr.Yc.', '.cY..rr..Yc.', '.cY.gggg.Yc.', '.cY.g..g.Yc.', '.cYYYYYYYYc.', '.cy.kkkk.yc.', '.cccccccccc.', '............'], { c: P.cream3, Y: P.gold3, r: P.red3, W: P.red5, R: P.red2, g: P.green3, y: P.gold2, k: P.ink }],
+  shellArmor: [['....ooooo...', '..ooOOOOOo..', '.oOOyyyOOOo.', '.oOyOOOyOOo.', 'oOOyOyyOyOOo', 'oOOyOy.yOyOo', 'oOOOyOOyOyOo', '.oOOOyyOOyo.', '.ooOOOOOyyo.', '..ccoooooo..', '.cCCc.......', '............'], { o: P.wood3, O: P.wood5, y: P.wood6, c: P.pink3, C: P.pink4 }],
+  ghost: [['...wwwww....', '..wWWWWWw...', '.wWkWWkWWw..', '.wWkWWkWWw..', '.wWWWWWWWw..', '.wWWkkkWWw..', '.wWWWWWWWw..', '.wWWWWWWWw..', '.wWwWWwWWw..', '.ww.ww.ww...', '............', '............'], { w: P.cream1, W: P.cream3, k: P.ink }],
+  bolt: [['......yyyy..', '.....yYYy...', '....yYYy....', '...yYYy.....', '..yYYYYYYy..', '.yyyyyYYy...', '.....yYy....', '....yYy.....', '...yYy......', '..yYy.......', '..yy........', '............'], { y: P.gold2, Y: P.gold4 }],
+  guitar: [['..........mm', '.........mm.', '........ww..', '.......ww...', '..bbb.ww....', '.bBBBbw.....', 'bBBkBBb.....', 'bBkkkBb.....', 'bBBkBBBb....', '.bBBBBBb....', '..bbBBb.....', '....bb......'], { m: P.metal4, w: P.wood6, b: P.wood2, B: P.wood5, k: P.ink }],
+  pinata: [['.....rr.....', '....rRRr....', '..ggrRRrbb..', '.gGGgRRbBBb.', 'gGGGGyyBBBBb', '.gGGyYYyBBb.', '..gyYYYYyb..', '..pYYyyYYp..', '.pPPp..pPPp.', 'pPPp....pPPp', 'pp........pp', '............'], { r: P.red3, R: P.red4, g: P.green3, G: P.green4, b: P.blue3, B: P.blue4, y: P.gold2, Y: P.gold3, p: P.pink2, P: P.pink3 }],
+};
+for (const [k, [rows, pal]] of Object.entries(SKI)) icon('sk_' + k, 12, 12, (pc, ox, oy) => pc.art(rows, pal, ox, oy));
+
 export function getIcon(name) { const f = ICONS[name]; return f ? f() : ICONS.qmark(); }
 export const ICON_NAMES = Object.keys(ICONS);
 

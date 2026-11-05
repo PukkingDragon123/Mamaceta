@@ -1,17 +1,17 @@
 // Keyboard + gamepad input.
-// Gameplay input is a 7-bit mask per player, sampled once per simulation tick.
+// Gameplay input is a 10-bit mask per player, sampled once per simulation tick.
 // Taps shorter than a tick are latched so they are never lost.
 
-export const BTN = { LEFT: 1, RIGHT: 2, UP: 4, DOWN: 8, LIGHT: 16, HEAVY: 32, BLOCK: 64 };
-export const ACTIONS = ['left', 'right', 'up', 'down', 'light', 'heavy', 'block'];
-const ACTION_BIT = { left: 1, right: 2, up: 4, down: 8, light: 16, heavy: 32, block: 64 };
+export const BTN = { LEFT: 1, RIGHT: 2, UP: 4, DOWN: 8, LIGHT: 16, HEAVY: 32, BLOCK: 64, SKILL1: 128, SKILL2: 256, SKILL3: 512 };
+export const ACTIONS = ['left', 'right', 'up', 'down', 'light', 'heavy', 'block', 'skill1', 'skill2', 'skill3'];
+const ACTION_BIT = { left: 1, right: 2, up: 4, down: 8, light: 16, heavy: 32, block: 64, skill1: 128, skill2: 256, skill3: 512 };
 
 export const DEFAULT_BINDINGS = {
-  p1: { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], light: ['KeyF'], heavy: ['KeyG'], block: ['KeyH'] },
-  p2: { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], light: ['KeyK', 'Numpad1'], heavy: ['KeyL', 'Numpad2'], block: ['Semicolon', 'Numpad3'] },
+  p1: { left: ['KeyA'], right: ['KeyD'], up: ['KeyW'], down: ['KeyS'], light: ['KeyF'], heavy: ['KeyG'], block: ['KeyH'], skill1: ['KeyR'], skill2: ['KeyT'], skill3: ['KeyY'] },
+  p2: { left: ['ArrowLeft'], right: ['ArrowRight'], up: ['ArrowUp'], down: ['ArrowDown'], light: ['KeyK', 'Numpad1'], heavy: ['KeyL', 'Numpad2'], block: ['Semicolon', 'Numpad3'], skill1: ['KeyI', 'Numpad4'], skill2: ['KeyO', 'Numpad5'], skill3: ['KeyP', 'Numpad6'] },
 };
 // extra keys that also work for a single player (training / vs CPU / online)
-const SOLO_EXTRA = { light: ['KeyJ', 'KeyZ'], heavy: ['KeyX'], block: ['KeyC', 'ShiftLeft'] };
+const SOLO_EXTRA = { light: ['KeyJ', 'KeyZ'], heavy: ['KeyX'], block: ['KeyC', 'ShiftLeft'], skill1: ['Digit1'], skill2: ['Digit2'], skill3: ['Digit3'] };
 
 export function keyLabel(code) {
   if (!code) return '-';
@@ -56,6 +56,8 @@ export class Input {
     for (const p of ['p1', 'p2']) {
       if (!b[p]) continue;
       for (const a of ACTIONS) if (Array.isArray(b[p][a]) && b[p][a].length) this.bindings[p][a] = b[p][a].slice(0, 2);
+      // saves from before skills existed: fill in the new defaults
+      for (const a of ACTIONS) if (!b[p][a]) { b[p][a] = DEFAULT_BINDINGS[p][a].slice(); this.bindings[p][a] = b[p][a].slice(); }
     }
   }
 
@@ -133,8 +135,11 @@ export class Input {
       if (b(13) || ay > 0.55) bits |= BTN.DOWN;
       if (b(2)) bits |= BTN.LIGHT;
       if (b(3)) bits |= BTN.HEAVY;
-      if (b(1) || b(5) || b(7)) bits |= BTN.BLOCK;
-      if (b(4) || b(6)) bits |= BTN.LIGHT | BTN.HEAVY;
+      if (b(1)) bits |= BTN.BLOCK;
+      if (b(7)) bits |= BTN.LIGHT | BTN.HEAVY; // RT = ultimate
+      if (b(4)) bits |= BTN.SKILL1;            // LB
+      if (b(5)) bits |= BTN.SKILL2;            // RB
+      if (b(6)) bits |= BTN.SKILL3;            // LT
       const menu = {
         up: b(12) || ay < -0.55, down: b(13) || ay > 0.55, left: b(14) || ax < -0.45, right: b(15) || ax > 0.45,
         confirm: b(0) || b(2), back: b(1), start: b(9), tabL: b(4), tabR: b(5),
@@ -224,7 +229,7 @@ export class Input {
     return false;
   }
   startPressed() {
-    if (this.pressedThisFrame.has('Escape') || this.pressedThisFrame.has('KeyP')) return true;
+    if (this.pressedThisFrame.has('Escape') || this.pressedThisFrame.has('Backquote')) return true;
     for (const i of [0, 1]) { const m = this.gpMenu[i]; if (m && m.cur.start && !m.prev.start) return true; }
     return false;
   }
