@@ -200,7 +200,7 @@ export class FX {
     for (const [id, b] of this.bubbles) { b.t += dt; if (b.t > b.dur + 0.3) this.bubbles.delete(id); }
     for (let i = this.texts.length - 1; i >= 0; i--) { const t = this.texts[i]; t.t += dt; t.y += t.vy * dt * Math.max(0, 1 - t.t * 1.5); if (t.t >= t.dur) this.texts.splice(i, 1); }
     this.flashA = Math.max(0, this.flashA - dt * 3.5);
-    this.impact = Math.max(0, this.impact - dt * 9);
+    this.impact = Math.max(0, this.impact - dt * 60); // impact frames are counted in frames
     this.speed = Math.max(0, this.speed - dt * 1.6);
   }
 

@@ -117,8 +117,11 @@ function armMimi(P, A, pal, k, z, g, back, pose, gl) {
 
 function legMimi(P, L, pal, k, z, g, back) {
   const B = back ? backMat : (m) => m;
-  P.cap(L.s, L.k, 2.5 * k, 2 * k, B(pal.stock), z, g);
-  P.cap(L.k, L.a, 2 * k, 1.6 * k, B(pal.stock), z + 0.05, g);
+  P.cap(L.s, L.k, 2.4 * k, 1.9 * k, B(pal.shell), z, g);
+  P.cap(lerp2(L.k, L.a, 0.08), L.a, 2 * k, 1.6 * k, B(pal.stock), z + 0.05, g);
+  // frilled sock cuff just under the knee
+  const cuff = lerp2(L.k, L.a, 0.12);
+  for (let i = -1; i <= 1; i++) P.ell([cuff[0] + i * 1.4 * k, cuff[1]], 1.3 * k, 1.1 * k, 0, B(pal.frill), z + 0.1, g);
   // mary-janes with a strap
   const a = L.a;
   P.poly([[a[0] - 2.5 * k, a[1] + 1.5 * k], [a[0] + 2 * k, a[1] + 1.5 * k], [a[0] + 5 * k, a[1] - 0.8 * k], [a[0] + 5 * k, a[1] - 2.6 * k], [a[0] - 3 * k, a[1] - 2.6 * k]], B(pal.shoe), z + 0.3, g);

@@ -817,13 +817,14 @@ export class Sim {
         f.x = f.flopX;
       }
     }
-    if (mf === 70) { f.vy = -0.9; f.inv = 0; this.event('flopFall', { i: f.i, x: f.x }); }
+    if (mf === 70) { f.vy = -0.9; f.inv = 0; f.drop = 60; this.event('flopFall', { i: f.i, x: f.x }); }
+    if (mf > 70 && !f.ground) f.drop = max(f.drop, 2); // crash through platforms down to the floor
     if (mf > 70 && f.ground && !f.slammed) {
       f.slammed = true;
       this.event('flopLand', { i: f.i, x: f.x });
       // direct hit check
       const dx = abs(o.x - f.x);
-      if (dx < 1.8 && o.y < 1.6 && o.inv <= 0 && o.st !== 'ko') {
+      if (dx < 1.8 && abs(o.y - f.y) < 1.6 && o.inv <= 0 && o.st !== 'ko') {
         this.applyHit(f, o, { dmg: 90, sh: 80, hs: 70, bs: 30, stop: 16, kb: [0.12 * (o.x >= f.x ? f.face : -f.face), 0.32], launch: true, lvl: 'mid', unblockable: true, ult: true, fx: 'flop' }, f.face, { x: o.x, y: 0.6 });
         this.event('flatten', { i: o.i });
         if (s.phase === 'ucine') { f.slammed = false; return; }

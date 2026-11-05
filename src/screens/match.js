@@ -52,8 +52,10 @@ export class MatchScreen {
     this.acc = 0; this.time = 0;
     this.paused = false; this.pauseSel = 0;
     const bnd = g.save.settings.bindings;
-    const keys = keyNamesFor(bnd);
-    if (cfg.mode !== 'local') keys[1] = { light: 'L', heavy: 'H', block: 'B', left: '<', right: '>', skills: ['', '', ''] };
+    const kn = keyNamesFor(bnd);
+    // local versus: each player has their own keys; otherwise the one local player uses P1's keys
+    const localIdx = cfg.mode === 'online' ? (cfg.localIndex ?? cfg.net?.localIndex ?? 0) : 0;
+    const keys = cfg.mode === 'local' ? kn : [0, 1].map((i) => (i === localIdx ? kn[0] : null));
     this.keys = keys;
     this.hud = new HUD(g, {
       names: cfg.players.map((p) => p.name),
@@ -641,7 +643,7 @@ export class MatchScreen {
     const hideBars = s.phase === 'intro' || (this.cine && (this.cine.kind === 'demon' || this.cine.kind === 'finisher'));
     this.hud.draw(ui, this.sim, {
       texts: s.phase === 'ucine' ? [] : this.fx.texts, project: proj, hideBars,
-      keyHints: this.cfg.mode === 'local' ? [`${keyLabel(b.p1.light[0])}+${keyLabel(b.p1.heavy[0])}`, `${keyLabel(b.p2.light[0])}+${keyLabel(b.p2.heavy[0])}`] : [`${keyLabel(b.p1.light[0])}+${keyLabel(b.p1.heavy[0])}`, ''],
+      keyHints: this.keys.map((k) => (k ? `${k.light}+${k.heavy}` : '')),
       qteKeys: this.qteKeyNames(),
     });
     if (s.phase === 'ucine' && s.ucine) {

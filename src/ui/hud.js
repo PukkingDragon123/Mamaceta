@@ -394,7 +394,7 @@ export class HUD {
         if (chosen) { ui.rect(x + 4, y + 14, cw - 8, 18, P.red2); ui.text('LOCKED!', x + cw / 2, y + 17, { font: 'labelB', align: 'center', color: P.cream4 }); }
       });
       const keys = this.keys[i];
-      if (!pk.done[i]) ui.text(`${keys?.left || '<'} ${keys?.right || '>'} CHOOSE   ${keys?.light || 'LIGHT'} PICK`, cx, y0 + ch + 10, { font: 'label', align: 'center', color: P.cream3 });
+      if (!pk.done[i] && keys) ui.text(`${keys.left} ${keys.right} CHOOSE   ${keys.light} PICK`, cx, y0 + ch + 10, { font: 'label', align: 'center', color: P.cream3 });
     }
   }
 
