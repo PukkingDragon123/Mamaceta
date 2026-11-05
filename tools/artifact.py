@@ -9,7 +9,7 @@ os.makedirs(out, exist_ok=True)
 html = open(os.path.join(dist, 'index.html')).read()
 # keep title, styles, body content and the module script; drop the document skeleton
 title = re.search(r'<title>.*?</title>', html, re.S).group(0)
-styles = ''.join(re.findall(r'<style>.*?</style>', html, re.S))
+styles = ''.join(re.findall(r'<style>.*?</style>', html, re.S)).replace('<style>', '<style>:root{color-scheme:dark}', 1)
 links = ''.join(re.findall(r'<link rel="modulepreload"[^>]*>', html))
 body = re.search(r'<body>(.*)</body>', html, re.S).group(1)
 scripts = ''.join(re.findall(r'<script type="module"[^>]*></script>', html))
