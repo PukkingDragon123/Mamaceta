@@ -26,7 +26,7 @@ async function boot() {
     console.error(e);
     window.__bootError = String(e && e.stack || e);
     const b = document.getElementById('boot');
-    if (b) { const d = document.createElement('div'); d.className = 'err'; d.textContent = 'Failed to start: ' + (e && e.message || e) + '\n\nYour browser needs WebGL2 support.'; b.appendChild(d); }
+    if (b) { const d = document.createElement('div'); d.className = 'err'; d.textContent = 'Failed to start: ' + (e && e.message || e) + '\n\nTry a recent Chrome, Edge, Firefox or Safari.'; b.appendChild(d); }
   }
 }
 boot();

@@ -260,7 +260,7 @@ export class CharSelectScreen {
       name: this.net ? (i === this.localIdx ? Save.data.name : (this.net.remoteName || 'RIVAL')) : (this.mode === 'local' ? `P${i + 1}` : i === 0 ? Save.data.name : (this.mode === 'training' ? 'DUMMY' : 'CPU')),
       cpu: this.mode === 'cpu' && i === 1 ? (Save.settings.cpuLevel || 2) : null,
     }));
-    if (this.mode === 'training') { startMatch(g, { mode: 'training', players, stage: 'rustpit', skipIntro: true }); return; }
+    if (this.mode === 'training') { startMatch(g, { mode: 'training', players, stage: 'training', skipIntro: true }); return; }
     goMapVote(g, { mode: this.mode, players, net: this.net });
   }
 

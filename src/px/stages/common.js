@@ -7,7 +7,8 @@ import { PPU } from '../display.js';
 import { hexU, ramp, rampOf, mixU, darkU, lightU, u32, BAYER4 } from '../pal.js';
 
 export { PPU, hexU, ramp, rampOf, mixU, darkU, lightU, u32, BAYER4 };
-export const C = hexU;
+const C_CACHE = new Map();
+export const C = (hex) => { let v = C_CACHE.get(hex); if (v === undefined) { v = hexU(hex); C_CACHE.set(hex, v); } return v; };
 export const TAU = Math.PI * 2;
 export const PIV_Y = 5.5;                       // vertical parallax pivot (world y)
 export const AX = (x) => Math.round(x * PPU);   // world x -> absolute art x

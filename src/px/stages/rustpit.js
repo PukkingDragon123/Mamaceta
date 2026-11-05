@@ -45,8 +45,8 @@ export class RustPitStage extends StageBase {
     this.snow = new Snow({ seed: 3 });
     this.snowFront = new Snow({ seed: 9, tile: 512, bands: [{ p: 1.35, n: 7, col: '#8fc8c0', sz: 2, sp: 18, big: 0 }] });
     this.fish = new FishLayer({ count: 9, x0: -22, x1: 22, y0: 9.4, y1: 13.5, p: [0.12, 0.34], col: (p) => (p < 0.22 ? '#0f3e4a' : '#0c3442'), belly: (p) => (p < 0.22 ? '#155262' : '#124a58'), seed: 5 });
-    this.ref = new Referee();
-    this.ref.x = 0.6; this.ref.home = 0.6;
+    this.ref = new Referee({ fogAmt: 0.34 });
+    this.ref.x = -9.6; this.ref.home = -9.6; this.ref.range = 1.0;
     this.specs = [new Spectator('grouper', -5.6, 2.3, 1), new Spectator('tang', 4.8, 2.9, -1), new Spectator('crab', -4.7, 0.62, 1)];
     // pipe leaks: bubble streams + oil blobs
     for (const [x, y] of [[-4.2 * 0.88, 6.6], [10.6 * 0.88, 7.4], [6.3 * 0.88, 4.4]]) this.bub.emitter(x, y, 3.2, { p: WALL_P, spread: 0.05, top: 14, amp: 1 });
@@ -78,7 +78,7 @@ export class RustPitStage extends StageBase {
       if (v > 1.55 && BY(i, j) < 0.5 - j / 140) P.d[j * W + i] = C('#3a92a0');
     }
     this.water = new Layer(P, X0, Y0, 0.06, 0.2);
-    this.shafts = shaftLayer(W, AY(4.5) - Y0, X0, Y0, { n: 9, seed: 4, col: C('#3f98a2'), frames: 2, dir: 0.8, amp: 1.6 });
+    this.shafts = shaftLayer(W, AY(4.5) - Y0, X0, Y0, { n: 4, seed: 4, col: C('#3a8f9a'), frames: 2, dir: 0.8, amp: 0.85 });
   }
   buildFar() {
     // distant rig legs: cross-braced trusses
@@ -508,11 +508,11 @@ export class RustPitStage extends StageBase {
     for (let k = -2; k <= 2; k++) { const c = coneSprite(len + 30, 12, 230, k * 0.04, C('#a8a070'), [0.12, 0.25], { floorY: len, fade: 0.8 }); this.cones.push({ cv: c.canvas(), ax: c.ax }); }
     this.lamps = [{ x: -7.2, y: 8.7, top: 13.6 }, { x: 7.2, y: 8.7, top: 13.6 }];
     // big cool shaft of daylight falling through the torn roof onto the ring (2 shimmer frames)
-    const top = AY(10.8), fl = AY(0.25) - top, rays = [[-170, 22, 80, 0.3, 0.9], [-60, 40, 120, 0.26, 1], [80, 16, 60, 0.22, 0.8]];
+    const top = AY(10.8), fl = AY(0.25) - top, rays = [[-110, 30, 96, 0.27, 1], [60, 16, 54, 0.23, 0.7]];
     this.godray = [0, 1].map((f) => {
       const P = new Pix(900, fl + 12);
       for (const [x, w0, w1, a, k] of rays) {
-        const c = coneSprite(fl + 6, w0, w1, a, C('#58aeb2'), [(0.05 + f * 0.015) * k, (0.11 - f * 0.015) * k], { floorY: fl, fade: 0.82 });
+        const c = coneSprite(fl + 6, w0, w1, a, C('#4e9ea4'), [(0.035 + f * 0.01) * k, (0.075 - f * 0.01) * k], { floorY: fl, fade: 0.7 });
         P.blit(c, 300 + x - c.ax, 0);
       }
       return { cv: P.canvas(), ax: 300 };
@@ -714,9 +714,9 @@ export class RustPitStage extends StageBase {
     this.floor.draw(d);
     if (this.dark < 0.5) { const gr = this.godray[Math.floor(t * 1.3) & 1]; drawAt(d, gr.cv, AX(-2.6) - gr.ax, AY(10.8), 0.94, 1); }
     for (const sp of this.specs) if (sp.behind) sp.draw(d, t, this.fenceP - 0.02);
+    this.ref.draw(d, t, this.fenceP - 0.01);
     this.fence.draw(d);
     for (const sp of this.specs) if (!sp.behind) sp.draw(d, t, this.fenceP + 0.01);
-    this.ref.draw(d, t, this.floor.pAt(0.32));
     if (this.dark > 0.02) d.dither('#02060a', this.dark * 0.8);
   }
   drawFront(d, t) {

@@ -160,7 +160,8 @@ export class Referee extends NPC {
     if (fs && fs.length >= 2) mid = (fs[0].x + fs[1].x) / 2;
     if (this.state !== 'idle' && this.st <= 0) this.state = 'idle';
     // shuffle to keep the fight in view, never too close
-    this.target = clamp(this.home + (mid - this.home) * 0.35, this.home - 2.4, this.home + 2.4);
+    const rg = this.range ?? 2.4;
+    this.target = clamp(this.home + (mid - this.home) * 0.35, this.home - rg, this.home + rg);
     const dx = this.target - this.x;
     this.walking = this.state === 'idle' && Math.abs(dx) > 0.35;
     if (this.walking) { this.x += Math.sign(dx) * dt * 0.9; this.walkPh += dt * 7; }
