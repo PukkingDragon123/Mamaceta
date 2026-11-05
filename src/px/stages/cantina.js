@@ -521,10 +521,9 @@ export class CantinaStage extends StageBase {
       const ax = p.x, ay = p.y + 0.42;
       if (p.state === 'rest') {
         // chain from the ceiling beam
-        const top = 9.4, L = (top - ay) * PPU;
-        for (let k = 0; k < L; k += 3) { const x = d.bx(ax) + Math.round(Math.sin(ang) * (L - k) * -1 * 0) - Math.round(Math.sin(ang) * k * 0) ; }
+        const top = 9.4;
         const x0 = d.bx(ax), y0 = d.by(top);
-        const bx = Math.round(x0 - Math.sin(ang) * 0), by0 = d.by(ay);
+        const bx = x0, by0 = d.by(ay);
         for (let y = y0; y < by0; y += 3) { const f = (y - y0) / Math.max(1, by0 - y0); g.fillStyle = ((y / 3) & 1) ? '#3a3a3a' : '#6a6a6a'; g.fillRect(Math.round(x0 + (bx - x0) * f), y, ((y / 3) & 1) ? 1 : 2, 3); }
       }
       const k = Math.round(ang / 0.05);

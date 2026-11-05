@@ -53,6 +53,11 @@ if (isBar) { stage = new BarScene(); }
 else { st = STAGES[stageId]; stage = makeStage(stageId, st); s = fakeState(st); s.frame = Math.round(num('frame', t * 60)); }
 const tBuild = performance.now() - t0;
 console.warn(`[perf] construct ${isBar ? 'bar' : stageId}: ${tBuild.toFixed(1)} ms`);
+if (q.has('bench')) {
+  const res = [];
+  for (let i = 0; i < +q.get('bench'); i++) { const a = performance.now(); if (isBar) new BarScene(); else for (const id of ['rustpit', 'cantina', 'training']) { const b = performance.now(); makeStage(id, STAGES[id]); res.push(id + ' ' + (performance.now() - b).toFixed(0)); } if (isBar) res.push('bar ' + (performance.now() - a).toFixed(0)); }
+  console.warn('[bench] ' + res.join(' | '));
+}
 if (isBar) {
   const c = stage.cams[q.get('cam') || 'overview'] || stage.cams.overview;
   cam = { x: num('x', c.x), y: num('y', c.y), zoom: num('zoom', c.zoom) };

@@ -61,14 +61,14 @@ export class BarScene {
     };
     const T = [];
     const tm = (n, f) => { const a = performance.now(); f(); T.push(n + ' ' + (performance.now() - a).toFixed(0)); };
-    tm('sea', () => this.buildSea());
     tm('wall', () => this.buildWall());
-    tm('shop', () => this.buildShopWall());
     tm('ceil', () => this.buildCeiling());
     tm('floor', () => this.buildFloor());
     tm('mid', () => this.buildMid());
-    tm('doors', () => this.buildDoors());
     tm('front', () => this.buildFront());
+    // zones that start off-screen are baked lazily (one per idle frame, or on demand when seen)
+    this.lazy = { sea: () => this.buildSea(), doors: () => this.buildDoors(), shop: () => this.buildShopWall() };
+    if (typeof location !== 'undefined' && location.search.includes('eager')) for (const k of Object.keys(this.lazy)) this.ensure(k);
     if (typeof location !== 'undefined' && location.search.includes('prof')) console.warn('[perf] ' + T.join(' | '));
     this.fish = new FishLayer({ count: 9, x0: -2, x1: 14, y0: 2.2, y1: 4.8, p: [0.45, 0.55], col: () => '#1a5a64', belly: () => '#2a7480', seed: 31, kinds: ['small', 'small', 'mid', 'jelly', 'small'] });
     this.snow = new Snow({ seed: 41, bands: [{ p: 0.95, n: 9, col: '#4a5250', sz: 1, sp: 4 }, { p: 1.2, n: 5, col: '#6a6a60', sz: 1, sp: 7, big: 0.3 }] });
@@ -107,7 +107,10 @@ export class BarScene {
     const lx = (xw) => AX(wxz(xw)) - X0, ly = (yw) => AY(yw) - Y0;
     this.wX0 = X0; this.wY0 = Y0; this.wlx = lx; this.wly = ly;
     // base: riveted steel bulkhead everywhere (the rig), then each zone dresses it up
-    rustPlates(P, 0, 0, W, H, { pw: 96, ph: 72, paint: STW, rust: RUSTW, rivet: STW, seam: C('#0a0e0e'), rustAmt: 0.3, seed: 51, drips: false });
+    // steel only where it stays visible (gym, booth, stage edges); other zones paint over their own base
+    const plates = (xa, xb) => { const a = clamp(Math.round(xa), 0, W), b = clamp(Math.round(xb), 0, W); if (b > a) rustPlates(P, a, 0, b - a, H, { pw: 96, ph: 72, paint: STW, rust: RUSTW, rivet: STW, seam: C('#0a0e0e'), rustAmt: 0.3, seed: 51, drips: false }); };
+    plates(lx(-27.4), lx(-15) + 2); plates(lx(6.6) - 2, lx(15.1) + 2);
+    P.rect(0, 0, lx(-27.4), H, STW[1]); P.rect(lx(15.1), 0, W - lx(15.1), H, STW[1]);
     const wy = ly(1.9);
     // ---- gym corner (x < -15): green paint, rubber skirt, mirror, gear
     const gx0 = 0, gx1 = lx(-15);
@@ -324,7 +327,7 @@ export class BarScene {
     const wd = RO(['#22140c', '#321e12', '#462a1a', '#5a3822', '#6e462a']);
     const SEAMC = C('#0e0806'), M1 = C('#1a1a1e'), M2 = C('#202026'), M3 = C('#0e0e12'), FOGF = C('#0a0605'), DK = C('#050303');
     const rugs = [
-      { cx: -0.6 * PPU, cv: 1222, rw: 120, rv: 120, pal: [C('#3a1a12'), C('#c8a040'), C('#2a3a6a'), C('#d8c8a0'), C('#7a2218')] },
+      { cx: -0.6 * PPU, cv: 1222, rw: 120, rv: 120, pal: [C('#2a120e'), C('#9a7a34'), C('#3a1e1a'), C('#a8946e'), C('#5a1c16')], calm: true },
       { cx: 11.0 * PPU, cv: 1200, rw: 110, rv: 100, pal: [C('#1a2a3a'), C('#a88a3a'), C('#5a2a2a'), C('#b8a888'), C('#2a4a56')], calm: true },
       { cx: 37.2 * PPU, cv: 1222, rw: 240, rv: 140, pal: [C('#2a1030'), C('#c8a040'), C('#5a2048'), C('#a8885a'), C('#3e1a4a')], calm: true },
     ];
@@ -616,9 +619,12 @@ export class BarScene {
   setSecretDoor(open, instant = false) { this.secretTarget = clamp(open, 0, 1); if (instant) this.secret = this.secretTarget; }
   doorVotes(i, n) { if (i === 0 || i === 1) this.votes[i] = Math.max(0, n | 0); }
   setDark(a) { this.dark = clamp(a || 0, 0, 1); }
+  ensure(k) { const f = this.lazy[k]; if (f) { this.lazy[k] = null; f(); } }
+  seen(d, x0, x1) { const v = d.visibleWorld(); return v.x1 > x0 - 2 && v.x0 < x1 + 2; }
 
   update(dt) {
     this.t += dt;
+    for (const k in this.lazy) if (this.lazy[k]) { this.ensure(k); break; }
     this.fish.update(dt); this.bub.update(dt); this.fx.update(dt);
     this.bart.update(dt); this.molt.update(dt);
     for (let i = 0; i < 2; i++) this.doorOpen[i] += (this.doorTarget[i] - this.doorOpen[i]) * Math.min(1, dt * 4);
@@ -636,11 +642,9 @@ export class BarScene {
 
   drawBack(d, t) {
     const g = d.g;
-    this.sea.draw(d);
-    this.fish.draw(d, t);
-    this.bub.draw(d, t, 0.45, 0.55);
+    if (this.seen(d, 5, 16)) { this.ensure('sea'); this.sea.draw(d); this.fish.draw(d, t); this.bub.draw(d, t, 0.45, 0.55); }
     this.wall.draw(d);
-    this.shopWall.draw(d);
+    if (this.seen(d, 29, 48)) { this.ensure('shop'); this.shopWall.draw(d); }
     // neon + TV + string lights on the wall plane
     const N = this.neonBar;
     drawAt(d, this.neonOn ? N.on : N.off, AX(wxz(this.neonBarPos.x)) - N.w / 2, AY(this.neonBarPos.y), WALL_P, 1);
@@ -650,12 +654,14 @@ export class BarScene {
     this.ceil.draw(d);
     this.floor.draw(d);
     // pendant lamps over the bar and the pool table (dithered cones)
+    if (this.seen(d, 19, 32)) this.ensure('doors');
     this.drawLamps(d, t);
     if (this.showBartender) this.bart.draw(d, t, 0.985);
     if (this.showMolt) this.molt.draw(d, t, 1);
     // spotlight on the try-on pedestal
-    if (this.secret > 0.3) drawAt(d, this.pedCone.cv, AX(this.spots.pedestal.x) - this.pedCone.ax, AY(CEIL + 0.1), 1, 1);
+    if (this.secret > 0.3 && this.pedCone) drawAt(d, this.pedCone.cv, AX(this.spots.pedestal.x) - this.pedCone.ax, AY(CEIL + 0.1), 1, 1);
     this.snow.draw(d, t, 'back');
+    if (this.dark > 0.02) d.dither('#020203', this.dark * 0.75);
   }
   drawTV(d, t) {
     const g = d.g, x = pbx(d, wxz(this.tvPos.x), WALL_P), y = pby(d, this.tvPos.y, 1);
@@ -690,12 +696,18 @@ export class BarScene {
     g.fillStyle = '#121010'; g.fillRect(px - 20, py0, 1, py1 - py0); g.fillRect(px + 20, py0, 1, py1 - py0);
     g.fillStyle = '#1e4a2a'; g.fillRect(px - 36, py1, 72, 8); g.fillStyle = '#2e6a3a'; g.fillRect(px - 36, py1, 72, 2); g.fillStyle = '#0e2a16'; g.fillRect(px - 36, py1 + 7, 72, 1);
     g.fillStyle = '#c8a040'; g.fillRect(px - 36, py1 + 8, 72, 1); g.fillStyle = '#f0e8c0'; g.fillRect(px - 30, py1 + 9, 60, 1);
-    if (!this.poolCone) { const l = AY(0.9) - AY(3.0) - 10, c = coneSprite(l, 64, 110, 0, C('#c8d0a0'), [0.06, 0.12], { floorY: l - 1, fade: 1 }); this.poolCone = { cv: c.canvas(), ax: c.ax }; }
+    if (!this.poolCone) { const l = AY(0.9) - AY(3.0) - 10, c = coneSprite(l, 64, 110, 0, C('#b8c090'), [0.04, 0.08], { floorY: l - 1, fade: 1 }); this.poolCone = { cv: c.canvas(), ax: c.ax }; }
     g.drawImage(this.poolCone.cv, px - this.poolCone.ax, py1 + 10);
     // door lamps
-    for (const dd of this.spots.doors) drawAt(d, this.doorCone.cv, AX(dd.x) - this.doorCone.ax, AY(5.0), 1, 1);
+    if (this.doorCone) for (const dd of this.spots.doors) drawAt(d, this.doorCone.cv, AX(dd.x) - this.doorCone.ax, AY(5.0), 1, 1);
   }
   drawMid(d, t) {
+    const g = d.g;
+    if (this.seen(d, 19, 32)) this.ensure('doors');
+    if (this.doorDims) this.drawDoorZone(d, t);
+    this.drawFurniture(d, t);
+  }
+  drawDoorZone(d, t) {
     const g = d.g;
     // door corridors + leaves behind the bulkhead opening
     const dw = this.doorDims.w, dh = this.doorDims.h;
@@ -718,6 +730,9 @@ export class BarScene {
       const n = Math.min(4, this.votes[i]), x = d.bx(dd.x), y = d.by(4.75) + 26;
       for (let k = 0; k < 4; k++) { g.fillStyle = '#0a0a0a'; g.fillRect(x - 17 + k * 9, y + 1, 7, 5); g.fillStyle = k < n ? (Math.floor(t * 4 + k) & 1 ? '#ffd040' : '#ffb020') : '#3a3020'; g.fillRect(x - 16 + k * 9, y + 2, 5, 3); }
     });
+  }
+  drawFurniture(d, t) {
+    const g = d.g;
     // furniture
     for (const m of this.mids) g.drawImage(m.cv, d.bx(m.x) - m.ox, d.by(m.y) - m.oy);
     // arcade screen animation

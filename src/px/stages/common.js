@@ -432,7 +432,7 @@ export function rustPlates(P, X0, Y0, W, H, o = {}) {
   const paint = o.paint, paint2 = o.paint2 || paint, rust = o.rust || PAL.rust, rv = o.rivet || paint;
   const seam = o.seam ?? PAL.ink2, ra = o.rustAmt ?? 0.45, primer = o.primer ?? rust[2];
   const nfA = noiseField(W, H, 1 / 46, seed, 3, 6, X0, Y0);
-  const nfB = noiseField(W, H, 1 / 10, seed + 9, 2, 3, X0, Y0);
+  const nfB = noiseField(W, H, 1 / 10, seed + 9, 2, 4, X0, Y0);
   const gH = o.grimeH ?? 0, grime = o.grime;
   // per-column streak strength + length (rust running down from the seam / rivet rows)
   const span = W + pw;

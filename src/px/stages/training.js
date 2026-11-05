@@ -174,8 +174,8 @@ export class TrainingStage extends StageBase {
     Lp.rect(0, 0, 60, 4, STEEL[2]); Lp.hl(0, 59, 0, STEEL[4]); Lp.rect(3, 4, 54, 3, C('#e8f4f0')); Lp.hl(3, 56, 6, C('#b8d0d0'));
     Lp.outline(C('#070b0d'));
     this.lampCv = Lp.canvas();
-    const len = AY(WALL_BASE) - AY(12.2);
-    this.lampCone = (() => { const c = coneSprite(len, 54, 240, 0, C('#a8d8d0'), [0.06, 0.12], { floorY: len - 4, fade: 0.8 }); return { cv: c.canvas(), ax: c.ax }; })();
+    const len = AY(WALL_BASE) - AY(10.9);
+    this.lampCone = (() => { const c = coneSprite(len, 50, 200, 0, C('#a8d8d0'), [0.05, 0.1], { floorY: len - 4, fade: 0.75 }); return { cv: c.canvas(), ax: c.ax }; })();
   }
   catwalkSprite(w) {
     return this.spr('tcw' + w, () => {
@@ -214,7 +214,7 @@ export class TrainingStage extends StageBase {
     this.wall.draw(d);
     this.glass.draw(d);
     this.floor.draw(d);
-    for (const lx of [-7.3, 7.3]) { if (this.flick) drawAt(d, this.lampCone.cv, AX(lx) - this.lampCone.ax, AY(12.2) + 6, 0.92, 1); drawAt(d, this.lampCv, AX(lx) - 30, AY(12.2), 0.92, 1); }
+    for (const lx of [-7.3, 7.3]) { const ax = pbx(d, lx, 0.92), y0 = pby(d, 12.6, 1), y1 = pby(d, 10.9, 1); d.g.fillStyle = '#1a2228'; d.g.fillRect(ax - 22, y0, 1, y1 - y0); d.g.fillRect(ax + 21, y0, 1, y1 - y0); if (this.flick) drawAt(d, this.lampCone.cv, AX(lx) - this.lampCone.ax, AY(10.9) + 6, 0.92, 1); drawAt(d, this.lampCv, AX(lx) - 30, AY(10.9), 0.92, 1); }
     // banner + sandbags (world-ish depth)
     drawAt(d, this.banner.cv, AX(this.banner.x) - 115, AY(this.banner.y), 0.95, 1);
     for (const b of this.bags) {

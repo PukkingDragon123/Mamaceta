@@ -505,16 +505,17 @@ function drawMolt(P0, o) {
   P.stroke(curl, 1.4, 0.8, MOLT.shellB, 23, G.ant);
   // eyes on stalks with round gold spectacles
   const lid = o.laugh ? 1 : (o.lid ?? 0.22), look = o.look || [1, 0], slant = o.slant ?? 0.2;
-  const e1 = eyeStalk(P0, SK(H(0, 5.4)), 0.15, 3.4 * K, 2.6 * K, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant, z: 27, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
-  const e2 = eyeStalk(P0, SK(H(3.6, 4.8)), 0.45, 3.6 * K, 2.9 * K, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant, z: 28, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
-  for (const e of [e1, e2]) { for (let a = 0; a < TAU; a += 0.28) P0.px([e[0] + Math.cos(a) * 3.6 * K, e[1] + Math.sin(a) * 3.6 * K], hexU('#f0c33c'), 29, G.faceAcc); }
-  P0.line([e1[0] + 3.4 * K, e1[1]], [e2[0] - 3.4 * K, e2[1]], hexU('#f0c33c'), 29, G.faceAcc);
+  const e1 = eyeStalk(P0, SK(H(0, 5.4)), 0.15, 3.4 * K, 2.6 * K, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant, z: 31, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
+  const e2 = eyeStalk(P0, SK(H(3.6, 4.8)), 0.45, 3.6 * K, 2.9 * K, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant, z: 32, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
+  for (const e of [e1, e2]) { for (let a = 0; a < TAU; a += 0.28) P0.px([e[0] + Math.cos(a) * 3.6 * K, e[1] + Math.sin(a) * 3.6 * K], hexU('#f0c33c'), 33, G.faceAcc); }
+  P0.line([e1[0] + 3.4 * K, e1[1]], [e2[0] - 3.4 * K, e2[1]], hexU('#f0c33c'), 33, G.faceAcc);
   if (o.arc) for (const e of [e1, e2]) for (let i = -2; i <= 2; i++) P0.paint([e[0] + i, e[1] + (Math.abs(i) === 2 ? -1 : 0)], INK, G.eyes);
   // turban with gem + feather
-  P.ell(H(-1, 11), 8.5, 5.4, -0.1, MOLT.turban, 30, G.hat);
-  P.cap(H(-8, 9), H(6, 13), 2.2, 2, { ...MOLT.turban, bias: 0.25 }, 30.2, G.hat);
-  P.ell(H(4, 11.5), 2, 2.2, 0, MOLT.gem, 30.5, G.hat); P.px(H(3.5, 12.5), hexU('#ffffff'), 30.6, G.hat);
-  P.stroke([H(2, 14), H(-1, 20), H(-6, 23)], 2.6, 1, MOLT.feather, 29.8, G.hat);
+  P.ell(H(-4.5, 9.5), 7.2, 5.2, -0.25, MOLT.turban, 30, G.hat);
+  P.cap(H(-10, 7), H(1, 11.5), 2.0, 1.8, { ...MOLT.turban, bias: 0.25 }, 30.2, G.hat);
+  P.ell(H(-1.5, 11.6), 1.8, 2, 0, MOLT.gem, 30.5, G.hat); P.px(H(-2, 12.5), hexU('#ffffff'), 30.6, G.hat);
+  P.stroke([H(-3, 13.5), H(-6, 19), H(-11, 21)], 2.6, 1, MOLT.feather, 29.8, G.hat);
+  P.dot(H(5.5, -2.5), 1.4, hexU('#ff8a8a'), G.head);
   // lipstick smile
   mouth(P0, SK(H(7, -5)), o.talk ? (o.mouth === 'grin' || o.laugh ? 'shout' : 'eat') : (o.mouth || (o.laugh ? 'grin' : 'smug')), Math.round(3 * K), { ink: hexU('#a82a4a'), tongue: hexU('#d85a7a') });
   // front arm

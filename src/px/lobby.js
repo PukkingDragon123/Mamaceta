@@ -6,6 +6,7 @@ import { MenuFighter2D } from './menuFighter.js';
 import { Camera2D } from './camera.js';
 import { FX } from './fx.js';
 import { ease } from '../core/math.js';
+import { Sound } from '../core/sound.js';
 
 const CHARS = ['jim', 'brutus', 'bobby', 'mimi'];
 const ACT = { jim: 'bag', brutus: 'eat', bobby: 'arcade', mimi: 'puru' };
@@ -82,7 +83,7 @@ export class Lobby {
       const f = this.F[c];
       if (!f || !f.visible) continue;
       f.update(dt);
-      if (f.bagHit) { this.bar.punchBag?.(f.face, f.bagHit); this.onPunch?.(f, f.bagHit); f.bagHit = 0; }
+      if (f.bagHit) { this.bar.punchBag?.(f.bagHit, f.face); this.onPunch?.(f, f.bagHit); if (Math.abs(this.cam.x - f.x) < 6) Sound.sfx(f.bagHit === 2 ? 'hit_medium' : 'hit_light', { vol: 0.22 }); f.bagHit = 0; }
     }
     for (const e of this.extra) e.update?.(dt);
     this.fx.update(dt);

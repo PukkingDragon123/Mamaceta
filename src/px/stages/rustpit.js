@@ -508,7 +508,7 @@ export class RustPitStage extends StageBase {
     for (let k = -2; k <= 2; k++) { const c = coneSprite(len + 30, 12, 230, k * 0.04, C('#a8a070'), [0.12, 0.25], { floorY: len, fade: 0.8 }); this.cones.push({ cv: c.canvas(), ax: c.ax }); }
     this.lamps = [{ x: -7.2, y: 8.7, top: 13.6 }, { x: 7.2, y: 8.7, top: 13.6 }];
     // big cool shaft of daylight falling through the torn roof onto the ring (2 shimmer frames)
-    const top = AY(10.8), fl = AY(0.25) - top, rays = [[-110, 30, 96, 0.27, 1], [60, 16, 54, 0.23, 0.7]];
+    const top = AY(10.8), fl = AY(0.25) - top, rays = [[-60, 34, 110, 0.25, 0.8]];
     this.godray = [0, 1].map((f) => {
       const P = new Pix(900, fl + 12);
       for (const [x, w0, w1, a, k] of rays) {
