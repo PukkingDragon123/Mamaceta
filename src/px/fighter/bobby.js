@@ -150,7 +150,7 @@ function demonPalette() {
   p.claw = M(R(S.claw, { spread: 0.1 }));
   p.horn = M(R(S.horn, { spread: 0.1 }), { tex: (t, u) => (Math.floor(u) % 3 === 0 ? clampT(t - 1) : t) });
   p.face = M(R(S.belly));
-  p.flames = ['#3a0a2a', '#a0102a', '#ff3a2a', '#ffb040'].map(hexU);
+  p.flames = ['#4a0a2a', '#b0102a', '#ff4a2a', '#ffc050'].map(hexU);
   p.tail = { seg: p.shell, telson: M(R('#5a0a1a')), uro: p.shell };
   return p;
 }
@@ -223,16 +223,21 @@ function headDemon(P, J, H, pose, ctx, pal, k) {
 const EXPR_DEMON = (pose) => (pose.face === 'hurt' ? -1 : 1);
 
 function demonFire(P, J, t, cols, k, z, front = false) {
-  const pts = front ? [J.armF.h, J.head] : [J.head, J.neck, J.hip, J.armB.h];
+  // flat pixel hellfire: tongues of flame licking up from the shoulders, head and claws
+  const pts = front ? [J.armF.h, J.head] : [J.head, J.neck, J.waist, J.armB.h];
   for (let n = 0; n < pts.length; n++) {
     const base = pts[n];
-    const cnt = front ? 3 : 6;
+    const cnt = front ? 4 : 7;
     for (let i = 0; i < cnt; i++) {
-      const ph = (t * (front ? 2.6 : 1.8) + i / cnt + n * 0.13) % 1;
-      const x = base[0] + Math.sin(i * 2.7 + n + t * 3) * (front ? 3 : 7) * k, y = base[1] + ph * (front ? 10 : 18) * k - (front ? 0 : 4 * k);
-      const r = (1 - ph) * (front ? 1.6 : 3.2) * k + 0.5;
-      const c = cols[Math.min(3, Math.floor((1 - ph) * (front ? 4 : 3.2)))];
-      P.ell([x, y], r, r * 1.4, 0, { r: [c, c, c, c, c], flat: 2 }, z + i * 0.01, G.fx);
+      const ph = (t * (front ? 2.4 : 1.7) + i / cnt + n * 0.17) % 1;
+      const sway = Math.sin(i * 2.7 + n + t * 5) * (front ? 2.5 : 6) * k * (1 - ph * 0.5);
+      const x = base[0] + sway, y = base[1] + ph * (front ? 12 : 22) * k - (front ? 0 : 5 * k);
+      const r = (1 - ph) * (front ? 2.2 : 4) * k + 0.6;
+      const ci = Math.min(3, Math.floor((1 - ph) * 4));
+      const c = cols[ci];
+      // tongue: a tall flat ellipse plus a bright core
+      P.ell([x, y], r, r * 1.8, Math.sin(t * 4 + i) * 0.2, { r: [c, c, c, c, c], flat: 2 }, z + i * 0.01, G.fx);
+      if (ci >= 2 && r > 1.6) { const c2 = cols[Math.min(3, ci + 1)]; P.ell([x, y - r * 0.4], r * 0.45, r * 0.9, 0, { r: [c2, c2, c2, c2, c2], flat: 2 }, z + i * 0.01 + 0.005, G.fx); }
     }
   }
 }

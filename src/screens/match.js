@@ -616,12 +616,12 @@ export class MatchScreen {
   trainingKeys() {
     const inp = this.game.input;
     const order = ['stand', 'crouch', 'jump', 'block', 'block-low', 'cpu'];
-    if (inp.keyPressed('F1')) { this.trainingOpts.dummy = order[(order.indexOf(this.trainingOpts.dummy) + 1) % order.length]; Sound.sfx('ui_tab'); }
-    if (inp.keyPressed('F2')) { this.trainingOpts.infiniteMeter = !this.trainingOpts.infiniteMeter; Sound.sfx('ui_tab'); }
-    if (inp.keyPressed('F3')) { this.trainingOpts.showInputs = !this.trainingOpts.showInputs; Sound.sfx('ui_tab'); }
-    if (inp.keyPressed('F4')) { const s = this.sim.s; for (const f of s.fighters) { f.hp = f.hpMax; f.shell = f.shellMax; f.moltCd = 0; for (const k of f.sk) k.cd = 0; f.x = f.i === 0 ? -2.5 : 2.5; f.y = 0; f.vx = f.vy = 0; f.st = 'idle'; } Sound.sfx('ui_select'); }
-    if (inp.keyPressed('F6')) { this.showMoves = !this.showMoves; Sound.sfx('ui_tab'); }
-    if (inp.keyPressed('F7')) { const f = this.sim.s.fighters[0]; f.sk = []; this.sim.startPick([true, false], 'fight'); Sound.sfx('ui_tab'); }
+    if (inp.keyPressed('Digit4')) { this.trainingOpts.dummy = order[(order.indexOf(this.trainingOpts.dummy) + 1) % order.length]; Sound.sfx('ui_tab'); }
+    if (inp.keyPressed('Digit5')) { this.trainingOpts.infiniteMeter = !this.trainingOpts.infiniteMeter; Sound.sfx('ui_tab'); }
+    if (inp.keyPressed('Digit6')) { this.trainingOpts.showInputs = !this.trainingOpts.showInputs; Sound.sfx('ui_tab'); }
+    if (inp.keyPressed('Digit7')) { const s = this.sim.s; for (const f of s.fighters) { f.hp = f.hpMax; f.shell = f.shellMax; f.moltCd = 0; for (const k of f.sk) k.cd = 0; f.x = f.i === 0 ? -2.5 : 2.5; f.y = 0; f.vx = f.vy = 0; f.st = 'idle'; } Sound.sfx('ui_select'); }
+    if (inp.keyPressed('Digit8')) { this.showMoves = !this.showMoves; Sound.sfx('ui_tab'); }
+    if (inp.keyPressed('Digit9')) { const f = this.sim.s.fighters[0]; f.sk = []; this.sim.startPick([true, false], 'fight'); Sound.sfx('ui_tab'); }
   }
   finish() {
     if (this.finished) return;
@@ -702,7 +702,7 @@ export class MatchScreen {
     const x = 8, y = 76;
     ui.panel(x, y, 132, 82, { seed: 77, tone: 'dark', plankSize: 12, barnacles: 1 });
     ui.text('TRAINING TANK', x + 66, y + 5, { font: 'labelB', align: 'center', color: P.gold3 });
-    const rows = [`[F1] DUMMY: ${o.dummy.toUpperCase()}`, `[F2] INF METER: ${o.infiniteMeter ? 'ON' : 'OFF'}`, `[F3] INPUTS: ${o.showInputs ? 'ON' : 'OFF'}`, '[F4] RESET + COOLDOWNS', '[F6] MOVE LIST', '[F7] RE-DRAFT SKILLS'];
+    const rows = [`[4] DUMMY: ${o.dummy.toUpperCase()}`, `[5] INF METER: ${o.infiniteMeter ? 'ON' : 'OFF'}`, `[6] INPUTS: ${o.showInputs ? 'ON' : 'OFF'}`, '[7] RESET + COOLDOWNS', '[8] MOVE LIST', '[9] RE-DRAFT SKILLS'];
     rows.forEach((r, i) => ui.text(r, x + 6, y + 18 + i * 10, { font: 'body', color: P.cream3 }));
     if (o.showInputs) {
       let yy = y + 90, last = -1, n = 0;

@@ -13,8 +13,8 @@ const { chromium } = require('playwright');
   const t0 = Date.now();
   while (Date.now() - t0 < 520000) {
     const st = await p.evaluate(() => { const sc = window.__game.screen; const s = sc?.sim?.s; return { scr: sc?.constructor?.name, phase: s?.phase, frame: s?.frame, round: s?.round, wins: s?.wins, hp: s?.fighters?.map((f) => f.hp), cine: sc?.cine?.kind, res: !!sc?.rewards, err: window.__lastError }; });
-    const key = st.res ? 'results' : st.cine ? 'cine_' + st.cine : st.phase;
-    if (key && !shots.has(key) && ['qte', 'ko', 'cine_demon', 'cine_finisher', 'cine_ultSeq', 'results', 'roundEnd', 'matchEnd', 'cine_qte'].includes(key)) {
+    const key = st.res ? 'results' : st.phase === 'pick' && st.round > 1 ? 'pick' : st.phase === 'ucine' ? 'ucine' : st.cine ? 'cine_' + st.cine : st.phase;
+    if (key && !shots.has(key) && ['pick', 'ucine', 'qte', 'ko', 'cine_demon', 'cine_finisher', 'results', 'roundEnd', 'matchEnd', 'cine_qte'].includes(key)) {
       shots.add(key);
       await p.waitForTimeout(key === 'results' ? 2500 : 300);
       await p.screenshot({ path: `${out}/fm_${key}.png` });

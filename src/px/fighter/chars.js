@@ -169,7 +169,7 @@ function capeDraw(P, J, ctx, pal, k) {
   const T = torsoFrame(J);
   const a = T(-5 * k, 22 * k), b = T(3 * k, 22.5 * k);
   const pts = ch.p;
-  const poly = [a, ...pts.map((p, i) => [p[0] - 2 * k - i * 0.6 * k, p[1]]), ...pts.slice().reverse().map((p, i) => [p[0] + 4 * k + (pts.length - i) * 0.5 * k, p[1]]), b];
+  const poly = [a, ...pts.map((p, i) => [p[0] - (4 + i * 1.6) * k, p[1]]), ...pts.slice().reverse().map((p, i) => [p[0] + 2 * k, p[1]]), b];
   P.poly(poly, pal.cape, 1, G.cape);
 }
 
@@ -204,7 +204,7 @@ CHAR_DEFS.jim = {
     { id: 'band2', n: 6, seg: 3.2, rest: [-0.9, -0.42], grav: -0.1, damp: 0.9, stiff: 0.06, wind: 0.26, wf: 6, anchor: (J, P, c) => headFrame(J)(-9 * c.scale, 2.4 * c.scale) },
     { id: 'antA', n: 7, seg: 3.4, rest: [-0.55, 0.85], grav: -0.05, damp: 0.8, stiff: 0.22, wind: 0.1, anchor: (J, P, c) => headFrame(J)(6.5 * c.scale, 4.2 * c.scale) },
     { id: 'antB', n: 7, seg: 3.2, rest: [-0.75, 0.66], grav: -0.05, damp: 0.8, stiff: 0.22, wind: 0.1, anchor: (J, P, c) => headFrame(J)(5.2 * c.scale, 4.8 * c.scale) },
-    { id: 'cape', n: 6, seg: 5, rest: [-0.35, -0.94], grav: -0.3, damp: 0.88, wind: 0.2, anchor: (J, P, c) => torsoFrame(J)(-2 * c.scale, 22 * c.scale) },
+    { id: 'cape', n: 6, seg: 5, rest: [-0.6, -0.8], grav: -0.25, damp: 0.88, stiff: 0.05, wind: 0.3, anchor: (J, P, c) => torsoFrame(J)(-2 * c.scale, 22 * c.scale) },
   ],
 };
 

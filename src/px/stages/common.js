@@ -509,37 +509,44 @@ export function rustPlates(P, X0, Y0, W, H, o = {}) {
 
 // horizontal (or vertical) wood planks with grain, knots, nails and gaps.
 // o: { dir: 'h'|'v', pw (plank width px), r (ramp), seed, gap (colour), nails, worn, lenMin, lenMax }
+const SIN_T = new Float32Array(1024);
+for (let i = 0; i < 1024; i++) SIN_T[i] = Math.sin((i / 1024) * TAU);
+const fsin = (a) => SIN_T[((Math.round(a * 162.97) % 1024) + 1024) % 1024];
 export function woodPlanks(P, X0, Y0, W, H, o = {}) {
   const r = o.r || PAL.wood, seed = o.seed ?? 5, pw = o.pw ?? 9, vert = o.dir === 'v';
   const gap = o.gap ?? PAL.ink2;
   const nf = noiseField(W, H, 1 / 20, seed, 2, 4, X0, Y0);
   const along = vert ? H : W, across = vert ? W : H;
+  const PWd = P.w, d = P.d, nail = o.nail ?? PAL.steel[3];
+  const segMin = o.lenMin ?? 70, segMax = o.lenMax ?? 160;
   for (let a = 0; a < across; a++) {
     const pl = Math.floor(a / pw), pa = a - pl * pw;
-    const ps = hh(pl, 0, seed);
+    const ps = ih(pl, 0, seed);
     const tb = ps < 0.25 ? -1 : ps > 0.8 ? 1 : 0; // plank tone bias
-    const segL = (o.lenMin ?? 70) + Math.floor(hh(pl, 1, seed) * ((o.lenMax ?? 160) - (o.lenMin ?? 70)));
-    const segOff = Math.floor(hh(pl, 2, seed) * segL);
+    const segL = segMin + Math.floor(ih(pl, 1, seed) * (segMax - segMin));
+    const segOff = Math.floor(ih(pl, 2, seed) * segL);
+    let lastSeg = -1, ss = 0;
     for (let b = 0; b < along; b++) {
       const i = vert ? a : b, j = vert ? b : a;
       const X = X0 + i, Y = Y0 + j;
-      const sb = b + segOff, seg = Math.floor(sb / segL), sp = sb - seg * segL;
-      const ss = hh(pl, seg + 7, seed);
+      if (X < 0 || Y < 0 || X >= PWd || Y >= P.h) continue;
+      const sb = b + segOff, seg = (sb / segL) | 0, sp = sb - seg * segL;
+      if (seg !== lastSeg) { lastSeg = seg; ss = ih(pl, seg + 7, seed); }
       const n = nf[j * W + i];
       // grain: wavy lines along the plank
-      const gw = Math.sin((b * 0.045 + ss * 20) + Math.sin(b * 0.11 + ss * 9) * 1.4) * 2.2 + pa;
+      const gw = fsin(b * 0.045 + ss * 20 + fsin(b * 0.11 + ss * 9) * 1.4) * 2.2 + pa;
       const g = Math.floor(gw * 0.9 + ss * 4) % 3;
       let t = 2 + tb + (ss < 0.3 ? -1 : 0);
-      if (g === 0 && hh(X, Y, seed) < 0.55) t -= 1;
+      if (g === 0 && ih(X, Y, seed) < 0.55) t -= 1;
       if (n > 0.66) t -= 1;
       if (pa === 1) t += 1;
       if (pa === pw - 1) t = 0;
       let c = r[t < 0 ? 0 : t > 4 ? 4 : t];
       if (pa === 0 || sp === 0) c = gap;
-      if (sp === 1 && pa > 0) c = r[Math.max(0, Math.min(4, t - 1))];
+      else if (sp === 1) c = r[Math.max(0, Math.min(4, t - 1))];
       // nails near plank ends
-      if (o.nails !== false && (sp === 3 || sp === segL - 4) && (pa === 2 || pa === pw - 3)) c = o.nail ?? PAL.steel[3];
-      P.d[Y * P.w + X] = c;
+      if (o.nails !== false && (sp === 3 || sp === segL - 4) && (pa === 2 || pa === pw - 3)) c = nail;
+      d[Y * PWd + X] = c;
     }
   }
   // knots

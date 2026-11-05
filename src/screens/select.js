@@ -150,7 +150,7 @@ export class CharSelectScreen {
     const isHostAuthority = !this.net || this.net.isHost;
     this.time -= dt;
     if (Math.ceil(this.time) !== this.tickPrev && this.time > 0) { this.tickPrev = Math.ceil(this.time); if (this.time < 5.5) Sound.sfx('ui_timer_tick'); }
-    if (this.time <= 0 && isHostAuthority) {
+    if (this.time <= 0) { // every client auto-readies its own local players; the host then starts the versus
       for (let i = 0; i < 2; i++) { const p = this.p[i]; if (p.remote) continue; if (p.stage === 'pick') this.lock(i); if (!p.ready && p.stage !== 'wait') this.setReady(i); }
       if (this.mode === 'training' && this.trainPhase === 1 && !this.p[1].ready) { if (this.p[1].stage === 'pick') this.lock(1); this.setReady(1); }
     }
