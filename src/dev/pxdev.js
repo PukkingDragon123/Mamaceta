@@ -15,6 +15,7 @@ const states = q.get('st') ? q.get('st').split(',') : null;
 const mf = +(q.get('mf') || 6);
 const zoom = +(q.get('zoom') || 2.6);
 const skins = (q.get('skin') || '').split(',');
+const gloves = (q.get('gl') || '').split(',');
 const camY = +(q.get('y') || 1.0);
 const disp = new Display(document.getElementById('c'));
 const POSES = {
@@ -23,7 +24,7 @@ const POSES = {
 };
 const sprites = [];
 const list = moves || states || poses;
-chars.forEach((c, i) => list.forEach((p, j) => sprites.push({ c, s: new CharSprite(c === 'demon' ? 'demon' : c, { skin: skins[i] || 'default' }), key: p, x: 0 })));
+chars.forEach((c, i) => list.forEach((p, j) => sprites.push({ c, s: new CharSprite(c === 'demon' ? 'demon' : c, { skin: skins[i] || 'default', gloves: gloves[i] || 'default' }), key: p, x: 0 })));
 const n = sprites.length;
 sprites.forEach((sp, k) => { sp.x = (k - (n - 1) / 2) * +(q.get('sp') || 2.4); });
 let t = 0;

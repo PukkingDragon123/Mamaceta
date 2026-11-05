@@ -46,7 +46,7 @@ export class RustPitStage extends StageBase {
     this.snowFront = new Snow({ seed: 9, tile: 512, bands: [{ p: 1.35, n: 7, col: '#8fc8c0', sz: 2, sp: 18, big: 0 }] });
     this.fish = new FishLayer({ count: 9, x0: -22, x1: 22, y0: 9.4, y1: 13.5, p: [0.12, 0.34], col: (p) => (p < 0.22 ? '#0f3e4a' : '#0c3442'), belly: (p) => (p < 0.22 ? '#155262' : '#124a58'), seed: 5 });
     this.ref = new Referee({ fogAmt: 0.34 });
-    this.ref.x = -9.6; this.ref.home = -9.6; this.ref.range = 1.0;
+    this.ref.x = -9.6; this.ref.home = -9.6; this.ref.range = 1.0; this.ref.y = 0.5;
     this.specs = [new Spectator('grouper', -5.6, 2.3, 1), new Spectator('tang', 4.8, 2.9, -1), new Spectator('crab', -4.7, 0.62, 1)];
     // pipe leaks: bubble streams + oil blobs
     for (const [x, y] of [[-4.2 * 0.88, 6.6], [10.6 * 0.88, 7.4], [6.3 * 0.88, 4.4]]) this.bub.emitter(x, y, 3.2, { p: WALL_P, spread: 0.05, top: 14, amp: 1 });

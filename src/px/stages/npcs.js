@@ -486,9 +486,9 @@ function drawMolt(P, o) {
   const curl = []; for (let i = 0; i < 14; i++) { const a = i * 0.5; curl.push(H(-2 - i * 1.2 + Math.cos(a) * 2, 8 + i * 0.6 + Math.sin(a) * 2)); }
   P.stroke(curl, 1.4, 0.8, MOLT.shellB, 23, G.ant);
   // eyes on stalks with round gold spectacles
-  const lid = o.laugh ? 1 : 0.22, look = o.look || [1, 0];
-  const e1 = eyeStalk(P, H(0, 5.4), 0.15, 3.4, 2.6, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant: 0.2, z: 27, open: o.laugh ? 0 : 1, band: hexU('#c8406a') });
-  const e2 = eyeStalk(P, H(3.6, 4.8), 0.45, 3.6, 2.9, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant: 0.2, z: 28, open: o.laugh ? 0 : 1, band: hexU('#c8406a') });
+  const lid = o.laugh ? 1 : (o.lid ?? 0.22), look = o.look || [1, 0], slant = o.slant ?? 0.2;
+  const e1 = eyeStalk(P, H(0, 5.4), 0.15, 3.4, 2.6, { stalk: { ...MOLT.shell, bias: -0.3 }, eye: MOLT.eye, ink: INK, look, lid, slant, z: 27, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
+  const e2 = eyeStalk(P, H(3.6, 4.8), 0.45, 3.6, 2.9, { stalk: MOLT.shell, eye: MOLT.eye, ink: INK, look, lid, slant, z: 28, open: o.laugh ? 0 : 1, band: hexU('#c8406a'), pupil: o.pupil });
   for (const e of [e1, e2]) { for (let a = 0; a < TAU; a += 0.35) P.px([e[0] + Math.cos(a) * 3.6, e[1] + Math.sin(a) * 3.6], hexU('#f0c33c'), 29, G.faceAcc); }
   P.line(e1, e2, hexU('#f0c33c'), 29, G.faceAcc);
   if (o.arc) for (const e of [e1, e2]) for (let i = -2; i <= 2; i++) P.paint([e[0] + i, e[1] + (Math.abs(i) === 2 ? -1 : 0)], INK, G.eyes);
@@ -498,32 +498,49 @@ function drawMolt(P, o) {
   P.ell(H(4, 11.5), 2, 2.2, 0, MOLT.gem, 30.5, G.hat); P.px(H(3.5, 12.5), hexU('#ffffff'), 30.6, G.hat);
   P.stroke([H(2, 14), H(-1, 20), H(-6, 23)], 2.6, 1, MOLT.feather, 29.8, G.hat);
   // lipstick smile
-  mouth(P, H(7, -5), o.laugh ? 'grin' : 'smug', 3, { ink: hexU('#a82a4a') });
+  mouth(P, H(7, -5), o.talk ? (o.mouth === 'grin' || o.laugh ? 'shout' : 'eat') : (o.mouth || (o.laugh ? 'grin' : 'smug')), o.talk ? 3 : 3, { ink: hexU('#a82a4a'), tongue: hexU('#d85a7a') });
   // front arm
   const sh = [6, 45 + bob];
   if (o.arm === 'beckon') { const w = o.w || 0; P.cap(sh, [12, 42 + bob], 2.6, 2.3, MOLT.shell, 40, G.armF); P.cap([12, 42 + bob], [15 + w, 50 + bob], 2.2, 2, MOLT.shell, 40.1, G.armF); P.ell([15 + w, 52 + bob], 2.4, 2.2, 0, MOLT.shell, 40.2, G.armF); P.px([16 + w, 52 + bob], hexU('#2fe0a0'), 40.4, G.acc); }
   else if (o.arm === 'specs') { P.cap(sh, [12, 46 + bob], 2.6, 2.3, MOLT.shell, 40, G.armF); P.cap([12, 46 + bob], [9, 60 + bob], 2.2, 2, MOLT.shell, 40.1, G.armF); P.ell([9, 61 + bob], 2.2, 2, 0, MOLT.shell, 40.2, G.armF); }
   else { P.cap(sh, [11, 37 + bob], 2.6, 2.3, MOLT.shell, 40, G.armF); P.cap([11, 37 + bob], [5, 32 + bob], 2.2, 2, MOLT.shell, 40.1, G.armF); P.ell([4, 32 + bob], 2.4, 2.2, 0, MOLT.shell, 40.2, G.armF); P.px([3.5, 33 + bob], hexU('#f0c33c'), 40.4, G.acc); P.px([5, 33 + bob], hexU('#ff5aa0'), 40.4, G.acc); }
 }
+const MOLT_MOODS = {
+  neutral: {}, happy: { laugh: true, arc: true, bob: -1 }, laugh: { laugh: true, arc: true, bob: -1 }, beckon: { arm: 'beckon' }, specs: { arm: 'specs', look: [1, 0.3] },
+  thinking: { arm: 'specs', look: [1, 0.6], lid: 0.35 }, sly: { lid: 0.5, slant: -0.2, mouth: 'smug' }, sad: { lid: 0.32, slant: 0.7, mouth: 'hurt', look: [0.4, -0.6] },
+  surprised: { lid: 0, slant: 0.4, mouth: 'scared', pupil: 0.7 }, grin: { lid: 0.2, mouth: 'grin' },
+};
 export class MadamMolt extends NPC {
   constructor(x = 0, y = 0, o = {}) {
     super();
     this.x = x; this.y = y; this.face = o.face ?? -1;
     const mk = (opts) => frame(56, 92, 26, 88, (P) => drawMolt(P, opts), { fog: o.fog, fogAmt: o.fogAmt ?? 0 });
-    this.F = { idle0: mk({}), idle1: mk({ bob: -0.6 }), blink: mk({ arc: false, laugh: false, look: [1, -0.3] }), beckon0: mk({ arm: 'beckon', w: 0 }), beckon1: mk({ arm: 'beckon', w: -3 }), specs: mk({ arm: 'specs', look: [1, 0.3] }), laugh: mk({ laugh: true, arc: true, bob: -1 }) };
-    this.state = 'idle'; this.st = 0; this.next = 3;
+    this.F = {};
+    for (const k in MOLT_MOODS) {
+      const m = MOLT_MOODS[k];
+      if (k === 'beckon') this.F[k] = [[mk({ ...m, w: 0 }), mk({ ...m, w: -3 })], [mk({ ...m, w: 0, talk: true }), mk({ ...m, w: -3, talk: true })]];
+      else this.F[k] = [[mk(m), mk({ ...m, bob: (m.bob || 0) - 0.6 })], [mk({ ...m, talk: true }), mk({ ...m, talk: true, bob: (m.bob || 0) - 0.6 })]];
+    }
+    this.blinkF = mk({ lid: 1.2 });
+    this.state = 'neutral'; this.st = 0; this.next = 3; this.mood = null; this.talking = false; this.talkT = 0; this.blinkT = 2.5;
   }
-  // states: idle | beckon | specs | laugh
+  // scripted: setMood(name|null) - null returns to idle life; setTalk(bool) animates the mouth
+  setMood(name) { this.mood = name && MOLT_MOODS[name] ? name : null; }
+  setTalk(b) { this.talking = !!b; }
   act(state, dur = 1.6) { this.state = state; this.st = dur; }
   update(dt) {
-    this.t += dt; this.st -= dt; this.next -= dt;
-    if (this.state !== 'idle' && this.st <= 0) this.state = 'idle';
-    if (this.next <= 0 && this.state === 'idle') { this.next = 3 + Math.random() * 4; const r = Math.random(); this.act(r < 0.4 ? 'specs' : r < 0.7 ? 'beckon' : 'laugh', 1.4); }
+    this.t += dt; this.st -= dt; this.next -= dt; this.talkT += dt; this.blinkT -= dt;
+    if (this.blinkT < -0.12) this.blinkT = 2 + Math.random() * 3;
+    if (this.state !== 'neutral' && this.st <= 0) this.state = 'neutral';
+    if (!this.mood && !this.talking && this.next <= 0 && this.state === 'neutral') { this.next = 3 + Math.random() * 4; const r = Math.random(); this.act(r < 0.4 ? 'specs' : r < 0.7 ? 'beckon' : 'laugh', 1.4); }
   }
   draw(d, t, p = 1) {
-    const F = this.F;
-    const f = this.state === 'beckon' ? (Math.floor(t * 5) & 1 ? F.beckon0 : F.beckon1) : this.state === 'specs' ? F.specs : this.state === 'laugh' ? F.laugh : (Math.floor(t * 1.2) & 1 ? F.idle0 : F.idle1);
-    this.drawFrame(d, f, p, this.face < 0, this.state === 'laugh' ? -(Math.floor(t * 8) & 1) : 0);
+    const mood = this.mood || this.state, set = this.F[mood] || this.F.neutral;
+    const talkOpen = this.talking && (Math.floor(this.talkT * 9) % 3 !== 2);
+    const arr = set[talkOpen ? 1 : 0];
+    let f = mood === 'beckon' ? arr[Math.floor(t * 5) & 1] : arr[Math.floor(t * 1.2) & 1];
+    if (mood === 'neutral' && !this.talking && this.blinkT < 0) f = this.blinkF;
+    this.drawFrame(d, f, p, this.face < 0, mood === 'laugh' || mood === 'happy' ? -(Math.floor(t * 8) & 1) : 0);
   }
 }
 export { NPC, frame, INK };

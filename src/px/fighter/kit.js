@@ -163,7 +163,8 @@ export function foot(P, ankle, facing, m, z, g, o = {}) {
 export function fist(P, wrist, ang, size, look, z, g, o = {}) {
   const gl = o.glove;
   if (gl) {
-    // boxing glove style cosmetic
+    // boxing glove style cosmetic (chunkier than a bare fist)
+    size *= 1.3;
     const c = along(wrist, ang, size * 0.62);
     P.cap(wrist, along(wrist, ang, size * 0.18), size * 0.42, size * 0.42, gl.cuff, z, g);
     P.ell(c, size * 0.62, size * 0.56, ang, gl.main, z + 0.1, g);
