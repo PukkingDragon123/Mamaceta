@@ -14,7 +14,12 @@ import {
 import { jukeboxSprite } from './cantina.js';
 import { Bartender, MadamMolt, NPC } from './npcs.js';
 
-const WALL_P = 0.92, WALL_BASE = 0.85, CEIL = 7.4;
+const WALL_P = 0.95, WALL_BASE = 0.85, CEIL = 7.4;
+// zone cameras: wall decor of each zone is baked so it lines up with the furniture when the camera
+// frames that zone (the wall scrolls at WALL_P, so decor would otherwise drift by camX*(1-WALL_P)).
+const ZONES = [[-15, -19], [-3.8, -9], [6.6, 1.0], [15.1, 11], [20.6, 17.9], [31, 25.2], [99, 37.4]];
+const zoneCam = (x) => { for (const [x1, c] of ZONES) if (x < x1) return c; return 37.4; };
+const wxz = (x) => x - zoneCam(x) * (1 - WALL_P);
 const FOGC = C('#161a22');
 const WD = RO(['#140c08', '#22140c', '#341e12', '#4a2c1a', '#5e3a22']);
 const WDL = RO(['#24160e', '#362014', '#4c2e1c', '#623c24', '#7a4c2e']);
@@ -25,8 +30,8 @@ const DAM = RO(['#160e22', '#22142e', '#2e1a3e', '#3e244e', '#523262']);
 
 export class BarScene {
   constructor() {
-    this.bounds = { left: -26, right: 42, bottom: -1.6, top: 11 };
-    this.x0 = -28; this.x1 = 44;
+    this.bounds = { left: -26, right: 44.5, bottom: -1.6, top: 11 };
+    this.x0 = -28; this.x1 = 46.5;
     this.t = 0; this.dark = 0;
     this.spots = {
       jim: { x: -18.4, y: 0, face: -1 },
@@ -35,13 +40,14 @@ export class BarScene {
       mimi: { x: 10.5, y: 0.52, face: 1, seat: true },
       select: { jim: { x: -2.1, y: 0, face: 1 }, brutus: { x: -0.7, y: 0, face: 1 }, bobby: { x: 0.7, y: 0, face: -1 }, mimi: { x: 2.1, y: 0, face: -1 } },
       versus: [{ x: -1.7, y: 0, face: 1 }, { x: 1.7, y: 0, face: -1 }],
-      molt: { x: 36.6, y: 0 },
+      molt: { x: 37.8, y: 0.62, face: -1 },
+      pedestal: { x: 34.0, y: 0.3, face: 1 },
       doors: [{ x: 22.7, y: 1.8 }, { x: 26.7, y: 1.8 }],
       secret: { x: 29.6, y: 1.5 },
-      shopCam: { x: 36.2, y: 2.3, zoom: 2.0 },
+      shopCam: { x: 37.4, y: 2.25, zoom: 1.9 },
     };
     this.cams = {
-      overview: { x: -4, y: 4.6, zoom: 1.0 },
+      overview: { x: -4.5, y: 3.9, zoom: 1.25 },
       jim: { x: -19.0, y: 1.55, zoom: 2.5 },
       brutus: { x: -9.0, y: 1.65, zoom: 2.5 },
       bobby: { x: 3.4, y: 1.55, zoom: 2.5 },
@@ -49,7 +55,8 @@ export class BarScene {
       select: { x: 0, y: 2.1, zoom: 2.1 },
       versus: { x: 0, y: 1.9, zoom: 2.4 },
       doors: { x: 25.2, y: 2.75, zoom: 1.7 },
-      shop: { x: 36.2, y: 2.3, zoom: 2.0 },
+      shop: { x: 37.4, y: 2.25, zoom: 1.9 },
+      pedestal: { x: 34.0, y: 1.3, zoom: 2.8 },
       stage: { x: 17.9, y: 2.0, zoom: 2.2 },
     };
     const T = [];
@@ -63,12 +70,12 @@ export class BarScene {
     tm('doors', () => this.buildDoors());
     tm('front', () => this.buildFront());
     if (typeof location !== 'undefined' && location.search.includes('prof')) console.warn('[perf] ' + T.join(' | '));
-    this.fish = new FishLayer({ count: 7, x0: -12, x1: 26, y0: 2.2, y1: 4.8, p: [0.45, 0.55], col: () => '#1a5a64', belly: () => '#2a7480', seed: 31, kinds: ['small', 'small', 'mid', 'jelly', 'small'] });
+    this.fish = new FishLayer({ count: 9, x0: -2, x1: 14, y0: 2.2, y1: 4.8, p: [0.45, 0.55], col: () => '#1a5a64', belly: () => '#2a7480', seed: 31, kinds: ['small', 'small', 'mid', 'jelly', 'small'] });
     this.snow = new Snow({ seed: 41, bands: [{ p: 0.95, n: 9, col: '#4a5250', sz: 1, sp: 4 }, { p: 1.2, n: 5, col: '#6a6a60', sz: 1, sp: 7, big: 0.3 }] });
     this.bub = new Bubbles();
     this.fx = new Debris();
-    this.bub.emitter(10.2 * 0.5 + 0.2, 2.0, 2.5, { p: 0.5, spread: 0.1, top: 4.9, amp: 1 });
-    this.bub.emitter(12.4 * 0.5 + 0.6, 2.0, 1.5, { p: 0.5, spread: 0.1, top: 4.9, amp: 1 });
+    this.bub.emitter(10.2 - 11 * 0.5, 2.0, 2.5, { p: 0.5, spread: 0.1, top: 4.9, amp: 1 });
+    this.bub.emitter(12.4 - 11 * 0.5, 2.0, 1.5, { p: 0.5, spread: 0.1, top: 4.9, amp: 1 });
     this.bart = new Bartender({ x: -9.8, minX: -12.6, maxX: -6.0, fogAmt: 0.05 });
     this.molt = new MadamMolt(this.spots.molt.x, this.spots.molt.y, { face: -1 });
     this.doorOpen = [0, 0]; this.doorTarget = [0, 0]; this.votes = [0, 0];
@@ -90,14 +97,14 @@ export class BarScene {
     P.poly([bx - 60, H - 20, bx + 60, H - 26, bx + 46, H - 2, bx - 50, H - 2], C('#0e3a44')); P.rect(bx - 2, H - 80, 4, 56, C('#0e3a44')); P.line(bx, H - 80, bx + 40, H - 30, C('#0e3a44'));
     for (let x = 0; x < W; x += 2) { const h = 6 + Math.round(vnoise(x * 0.03, 0, 9) * 14); P.rect(x, H - h, 2, h, C('#0c3038')); }
     for (let k = 0; k < 6; k++) { const x = Math.floor(hh(k, 1, 9) * W); for (let j = 0; j < H; j++) for (let i = -10; i < 10; i++) if (BY(x + i + j, j) < 0.12 * (1 - j / H)) P.seti(x + i + Math.round(j * 0.3), j, C('#3a8a90')); }
-    this.sea = new Layer(P, X0, Y0, 0.5, 0.6);
+    this.sea = new Layer(P, X0, Y0, 0.5, 1);
   }
 
   // ------------------------------------------------------------------ back wall of the bar
   buildWall() {
-    const X0 = AX(this.x0), W = AX(30.8) - X0, Y0 = AY(CEIL), Yb = AY(WALL_BASE), H = Yb - Y0;
+    const X0 = AX(this.x0 - 1), W = AX(31.6) - X0, Y0 = AY(CEIL), Yb = AY(WALL_BASE), H = Yb - Y0;
     const P = new Pix(W, H);
-    const lx = (xw) => AX(xw) - X0, ly = (yw) => AY(yw) - Y0;
+    const lx = (xw) => AX(wxz(xw)) - X0, ly = (yw) => AY(yw) - Y0;
     this.wX0 = X0; this.wY0 = Y0; this.wlx = lx; this.wly = ly;
     // base: riveted steel bulkhead everywhere (the rig), then each zone dresses it up
     rustPlates(P, 0, 0, W, H, { pw: 96, ph: 72, paint: STW, rust: RUSTW, rivet: STW, seam: C('#0a0e0e'), rustAmt: 0.3, seed: 51, drips: false });
@@ -106,17 +113,23 @@ export class BarScene {
     const gx0 = 0, gx1 = lx(-15);
     P.map(gx0, 0, gx1 - gx0, H, (c) => mixU(c, C('#1e3a2a'), 0.35));
     P.rect(gx0, wy, gx1 - gx0, H - wy, C('#16161a')); for (let x = gx0; x < gx1; x += 4) P.vl(x, wy, H - 1, C('#1e1e24')); P.hl(gx0, gx1, wy, C('#2e2e36'));
-    this.mirror(P, lx(-24.4), ly(4.4), 120, 104);
-    luchaPoster(P, lx(-17.2), ly(5.6), 34, 48, { bg: C('#3a2a5a'), mask: C('#c8a040'), mask2: C('#2a6a4a'), title: 'KUNG FU', sub: 'CAMARON' });
-    luchaPoster(P, lx(-16.2), ly(5.0), 28, 40, { bg: C('#5a2a22'), mask: C('#e8e0d0'), mask2: C('#c82a2a'), title: 'JIM', sub: '#1' });
-    P.map(lx(-17.3), ly(5.7), 80, 60, (c) => mixU(c, FOGC, 0.25));
-    // dumbbell wall rack + jump rope + whiteboard
-    const rx = lx(-21.0), ry = ly(2.7);
-    P.rect(rx, ry, 70, 4, STW[3]); P.hl(rx, rx + 69, ry, STW[4]);
-    for (let k = 0; k < 5; k++) { const x = rx + 6 + k * 13, s = 3 + (k % 3); P.rect(x - 1, ry - 4 - s, 3, s * 2 + 1, C('#2a2a30')); P.rect(x + 6, ry - 4 - s, 3, s * 2 + 1, C('#2a2a30')); P.hl(x, x + 7, ry - 4, C('#6a6a70')); }
-    sagLine(P, lx(-14.4) - 10, ly(5.8), lx(-14.4) + 6, ly(5.8), 46, C('#a83a2a'));
+    this.mirror(P, lx(-23.3), ly(4.3), 100, 100);
+    luchaPoster(P, lx(-18.3), ly(4.3), 34, 48, { bg: C('#3a2a5a'), mask: C('#c8a040'), mask2: C('#2a6a4a'), title: 'KUNG FU', sub: 'CAMARON' });
+    luchaPoster(P, lx(-17.3), ly(3.9), 28, 40, { bg: C('#5a2a22'), mask: C('#e8e0d0'), mask2: C('#c82a2a'), title: 'JIM', sub: '#1' });
+    P.map(lx(-18.4), ly(4.4), 80, 64, (c) => mixU(c, FOGC, 0.22));
+    // dumbbell wall rack, trophy shelf, speed bag, jump rope, whiteboard
+    const rx = lx(-20.6), ry = ly(2.45);
+    P.rect(rx, ry, 64, 4, STW[3]); P.hl(rx, rx + 63, ry, STW[4]);
+    for (let k = 0; k < 5; k++) { const x = rx + 5 + k * 12, sz = 3 + (k % 3); P.rect(x - 1, ry - 4 - sz, 3, sz * 2 + 1, C('#2a2a30')); P.rect(x + 6, ry - 4 - sz, 3, sz * 2 + 1, C('#2a2a30')); P.hl(x, x + 7, ry - 4, C('#6a6a70')); }
+    const tsx = lx(-20.5), tsy = ly(3.85);
+    P.rect(tsx, tsy, 56, 3, WD[3]); P.hl(tsx, tsx + 55, tsy, WDL[4]);
+    for (let k = 0; k < 3; k++) { const x = tsx + 8 + k * 18, h = 12 + (k === 1 ? 4 : 0), gd = PAL.gold; P.rect(x - 3, tsy - 3, 7, 3, WD[2]); P.rect(x, tsy - h, 2, h - 3, gd[2]); P.ell(x + 1, tsy - h, 4, 3, (xx, yy, nx) => (nx < -0.3 ? gd[4] : gd[3])); P.set(x - 3, tsy - h - 1, gd[2]); P.set(x + 5, tsy - h - 1, gd[2]); }
+    const sbx = lx(-15.9), sby = ly(3.4);
+    P.rect(sbx - 16, sby, 32, 4, WD[3]); P.rect(sbx - 2, sby - 14, 4, 14, WD[2]); P.ell(sbx, sby + 10, 5, 6, C('#8a2a22')); P.set(sbx - 2, sby + 8, C('#b84a3a')); P.vl(sbx, sby + 4, sby + 5, C('#2a2a2a'));
+    sagLine(P, lx(-15.5) - 8, ly(2.6), lx(-15.5) + 4, ly(2.6), 30, C('#a83a2a'));
     P.rect(lx(-21.6), ly(6.6), 60, 34, C('#c8ccc4')); P.rect(lx(-21.6) - 2, ly(6.6) - 2, 64, 2, STW[3]);
     text(P, 'DIA 1000', lx(-21.6) + 30, ly(6.6) + 4, C('#2a4a8a'), { font: 3, align: 'center' }); text(P, 'JAB X500', lx(-21.6) + 30, ly(6.6) + 12, C('#2a2a2a'), { font: 3, align: 'center' }); text(P, '¡NO RENDIRSE!', lx(-21.6) + 30, ly(6.6) + 22, C('#a82a2a'), { font: 3, align: 'center' });
+    text(P, 'GYM', lx(-19.5), ly(5.9), (x, y) => (ih(x, y, 3) < 0.15 ? undefined : C('#5a7a5a')), { sc: 3, align: 'center' });
     // ---- bar zone (x -15 .. -3.8): wood paneling, back bar, neon, TV, menu board
     const bx0 = lx(-15), bx1 = lx(-3.8);
     woodPlanks(P, bx0, 0, bx1 - bx0, H, { dir: 'v', r: WDL, pw: 12, seed: 61, gap: WD[0], lenMin: 400, lenMax: 400, nails: false });
@@ -125,8 +138,17 @@ export class BarScene {
     this.chalkMenu(P, lx(-4.75) - 30, ly(5.3));
     // ---- pool / arcade zone (x -3.8 .. 6.6): brick-red painted steel, dartboard, cue rack, BILLAR sign
     const px0 = lx(-3.8), px1 = lx(6.6);
-    P.map(px0, 0, px1 - px0, H, (c) => mixU(c, C('#4a1e18'), 0.45));
-    P.rect(px0, wy, px1 - px0, H - wy, WD[2]); for (let x = px0; x < px1; x += 16) P.vl(x, wy, H - 1, WD[0]); P.hl(px0, px1, wy, WDL[4]);
+    const BRK = RO(['#1e0e0c', '#2e1612', '#3e2018', '#4c2a1e', '#5a3424']);
+    for (let y = 0; y < wy; y++) for (let x = px0; x < px1; x++) {
+      const row = (y / 8) | 0, off = (row & 1) * 10, u = x - px0 + off, bx = u % 20, by = y % 8, bid = ih((u / 20) | 0, row, 7);
+      let c = by === 7 || bx === 19 ? BRK[0] : BRK[bid < 0.3 ? 1 : bid > 0.85 ? 3 : 2];
+      if (by === 0 && bx !== 19) c = BRK[Math.min(4, (bid > 0.85 ? 3 : 2) + 1)];
+      if (ih(x, y, 2) < 0.03) c = BRK[1];
+      P.seti(x, y, c);
+    }
+    P.rect(px0, wy, px1 - px0, H - wy, WD[2]); for (let x = px0; x < px1; x += 16) P.vl(x, wy, H - 1, WD[0]); P.hl(px0, px1, wy, WDL[4]); P.rect(px0, wy - 4, px1 - px0, 4, WD[3]); P.hl(px0, px1, wy - 4, WDL[4]);
+    this.neonPool = this.neonSign('BILLAR', NEON.cyan, NEON.pink, 'ball');
+    this.neonPoolPos = { x: -0.6, y: 6.4 };
     this.dartboard(P, lx(1.6), ly(3.4));
     this.cueRack(P, lx(-3.0), ly(4.0));
     luchaPoster(P, lx(4.0) - 17, ly(5.9), 34, 46, { bg: C('#1a3a5a'), mask: C('#3a9a5a'), mask2: C('#c83a6a'), title: 'MANTIS', sub: 'MAYHEM' });
@@ -233,9 +255,9 @@ export class BarScene {
 
   // ------------------------------------------------------------------ the hidden shop's back wall
   buildShopWall() {
-    const X0 = AX(30.4), W = AX(44) - X0, Y0 = AY(CEIL), H = AY(WALL_BASE) - Y0;
+    const X0 = AX(wxz(30.4)), W = AX(wxz(46.5)) - X0, Y0 = AY(CEIL), H = AY(WALL_BASE) - Y0;
     const P = new Pix(W, H);
-    const lx = (xw) => AX(xw) - X0, ly = (yw) => AY(yw) - Y0;
+    const lx = (xw) => AX(wxz(xw)) - X0, ly = (yw) => AY(yw) - Y0;
     this.sX0 = X0; this.sY0 = Y0;
     // damask wallpaper
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
@@ -253,7 +275,7 @@ export class BarScene {
     for (let k = 0; k < 8; k++) { const x = gx + 10 + (k % 4) * 22, y = gy + 10 + Math.floor(k / 4) * 32, c = R(glove[k], { spread: 0.12 }); P.vl(x + 4, y - 6, y, C('#c8c0a0')); for (const o of [0, 7]) { P.ell(x + o, y + 8, 5, 6, (xx, yy, nx, ny) => (nx + ny < -0.4 ? c[4] : nx + ny > 0.6 ? c[1] : c[2])); P.rect(x + o - 3, y + 13, 6, 4, c[1]); P.hl(x + o - 3, x + o + 2, y + 14, C('#e8e0d0')); } }
     // shelves of jars, crowns, masks and trinkets
     for (const [yw, seed] of [[5.9, 1], [4.6, 2], [3.3, 3]]) {
-      const y = ly(yw), xa = lx(35.0), xb = lx(41.6);
+      const y = ly(yw), xa = lx(35.6), xb = lx(42.4);
       P.rect(xa, y, xb - xa, 4, C('#7a5a2a')); P.hl(xa, xb - 1, y, C('#c8a040')); P.hl(xa, xb, y + 3, WD[0]);
       for (let x = xa + 4; x < xb - 12;) {
         const k = Math.floor(ih(x, seed, 7) * 6);
@@ -266,13 +288,15 @@ export class BarScene {
       }
     }
     // ornate gold mirror + sign
-    const mx = lx(33.8), my = ly(3.2);
-    P.ell(mx, my, 18, 22, C('#c8a040')); P.ell(mx, my, 15, 19, C('#2a2a40')); P.line(mx - 8, my - 10, mx + 2, my - 16, C('#5a5a7a'));
-    for (let k = 0; k < 10; k++) { const a = k * TAU / 10; P.disc(mx + Math.cos(a) * 18, my + Math.sin(a) * 22, 2, C('#f0c33c')); }
-    P.rect(lx(36.6) - 46, ly(6.9), 92, 14, C('#2a1a3a')); P.rect(lx(36.6) - 44, ly(6.9) + 2, 88, 10, C('#3a2450'));
-    text(P, "MADAM MOLT'S", lx(36.6), ly(6.9) + 4, C('#f0c33c'), { font: 3, align: 'center' });
+    // tall try-on mirror behind the pedestal
+    const mx = lx(34.0), my = ly(2.9);
+    P.ell(mx, my, 20, 34, C('#c8a040')); P.ell(mx, my, 17, 31, C('#22223a')); P.line(mx - 10, my - 14, mx + 4, my - 26, C('#4a4a6a')); P.line(mx - 8, my - 6, mx + 2, my - 14, C('#3a3a5a'));
+    for (let k = 0; k < 14; k++) { const a = k * TAU / 14; P.disc(mx + Math.cos(a) * 20, my + Math.sin(a) * 34, 2, C('#f0c33c')); }
+    P.poly([mx - 8, my - 36, mx, my - 46, mx + 8, my - 36], C('#f0c33c')); P.set(mx, my - 40, C('#ff5aa0'));
+    P.rect(lx(37.8) - 46, ly(6.9), 92, 14, C('#2a1a3a')); P.rect(lx(37.8) - 44, ly(6.9) + 2, 88, 10, C('#3a2450'));
+    text(P, "MADAM MOLT'S", lx(37.8), ly(6.9) + 4, C('#f0c33c'), { font: 3, align: 'center' });
     // beaded curtain at the back door
-    const bx = lx(41.7);
+    const bx = lx(44.2);
     P.rect(bx - 2, ly(4.0) - 4, 36, 4, C('#c8a040'));
     for (let s = 0; s < 8; s++) for (let j = 0; j < 30; j++) if (j % 2 === 0) P.seti(bx + s * 4, ly(4.0) + j * 2, C(['#ff5aa0', '#f0c33c', '#3ad8c0', '#c070ff'][(s + j) % 4]));
     P.map(0, 0, W, H, (c, x, y) => (BY(x, y) < clamp((14 - y) / 14, 0, 1) * 0.8 ? mixU(c, C('#060408'), 0.4) : undefined));
@@ -298,28 +322,40 @@ export class BarScene {
   buildFloor() {
     const K = 1222;
     const wd = RO(['#22140c', '#321e12', '#462a1a', '#5a3822', '#6e462a']);
+    const SEAMC = C('#0e0806'), M1 = C('#1a1a1e'), M2 = C('#202026'), M3 = C('#0e0e12'), FOGF = C('#0a0605'), DK = C('#050303');
+    const rugs = [
+      { cx: -0.6 * PPU, cv: 1222, rw: 120, rv: 120, pal: [C('#3a1a12'), C('#c8a040'), C('#2a3a6a'), C('#d8c8a0'), C('#7a2218')] },
+      { cx: 11.0 * PPU, cv: 1200, rw: 110, rv: 100, pal: [C('#1a2a3a'), C('#c8a040'), C('#7a2a2a'), C('#d8c8a0'), C('#2a5a6a')] },
+      { cx: 37.2 * PPU, cv: 1222, rw: 240, rv: 140, pal: [C('#2a1030'), C('#c8a040'), C('#5a2048'), C('#a8885a'), C('#3e1a4a')], calm: true },
+    ];
+    const rugAt = (u, v) => {
+      for (const r of rugs) {
+        const dx = Math.abs(u - r.cx), dz = Math.abs(v - r.cv);
+        if (dx > r.rw || dz > r.rv) continue;
+        const e = Math.min(r.rw - dx, r.rv - dz), pal = r.pal;
+        if (e < 1.5 && (Math.floor(u / 3) & 1)) return pal[3];
+        if (e < 3) return pal[0];
+        if (e < 6) return pal[1];
+        if (r.calm) { if (e < 9) return pal[0]; const md = Math.abs(dx / r.rw) + Math.abs(dz / r.rv); return Math.abs(md - 0.5) < 0.04 || Math.abs(md - 0.25) < 0.03 ? pal[1] : (Math.floor(dx / 10) + Math.floor(dz / 8)) % 4 === 0 ? pal[2] : pal[4]; }
+        return (Math.floor(dx / 8) + Math.floor(dz / 6)) % 3 === 0 ? pal[2] : (Math.abs(dx / r.rw - dz / r.rv) < 0.08 ? pal[3] : pal[4]);
+      }
+      return 0;
+    };
     const F = new PerspFloor(this.x0 - 3, this.x1 + 3, WALL_BASE, -1.72, WALL_P, 1.22, K, (u, v, du, dv, X, Y, p) => {
-      const xw = u / PPU;
-      // planks run left-right, rows in depth
       const row = Math.floor(v / 22), pvv = ((v % 22) + 22) % 22, rn = Math.floor((v + dv) / 22);
       const L = 150 + Math.floor(ih(row, 1, 5) * 120), off = Math.floor(ih(row, 2, 5) * L);
       const seg = Math.floor((u + off) / L), sn = Math.floor((u + off + du) / L);
       const ps = ih(row, seg, 3);
       let t = ps < 0.25 ? 1 : ps > 0.8 ? 3 : 2;
-      if (vnoise(u * 0.04, v * 0.08, 5) > 0.68) t = Math.max(0, t - 1);
+      if (ih(Math.floor(u / 14), Math.floor(v / 9), 6) < 0.18) t = Math.max(0, t - 1);
       if (pvv < dv + 1) t = Math.min(4, t + 1);
       let c = wd[t];
-      if (rn !== row || seg !== sn) c = C('#0e0806');
+      if (rn !== row || seg !== sn) c = SEAMC;
       if (ih(Math.floor(u / 2), Math.floor(v / 3), 9) < 0.012) c = wd[0];
-      // gym rubber mats
-      if (xw < -15.2) { const mu = Math.floor(u / 60), mv = Math.floor(v / 40); c = ((mu + mv) & 1) ? C('#1a1a1e') : C('#202026'); if (Math.floor((u + du) / 60) !== mu || Math.floor((v + dv) / 40) !== mv) c = C('#0e0e12'); }
-      // rugs (in floor space, so they look flat on the floor in perspective)
-      const rug = (cx, cv, rw, rv, pal) => { const dx = Math.abs(u - cx * PPU), dz = Math.abs(v - cv); if (dx > rw || dz > rv) return false; const e = Math.min(rw - dx, rv - dz); c = e < 3 ? pal[0] : e < 6 ? pal[1] : ((Math.floor(dx / 8) + Math.floor(dz / 6)) % 3 === 0 ? pal[2] : (Math.abs(dx / rw - dz / rv) < 0.08 ? pal[3] : pal[4])); if (e < 1.5 && (Math.floor(u / 3) & 1)) c = pal[3]; return true; };
-      rug(-0.6, 1222, 120, 120, [C('#3a1a12'), C('#c8a040'), C('#2a3a6a'), C('#d8c8a0'), C('#7a2218')]);
-      rug(11.0, 1200, 110, 100, [C('#1a2a3a'), C('#c8a040'), C('#7a2a2a'), C('#d8c8a0'), C('#2a5a6a')]);
-      rug(36.6, 1222, 220, 140, [C('#2a1030'), C('#f0c33c'), C('#7a2a5a'), C('#e8d8b0'), C('#4a1e5a')]);
-      if (p < 0.99) c = mixU(c, C('#0a0605'), (1 - p) * 2.4);
-      if (p > 1.14 && BY(X, Y) < (p - 1.14) * 9) c = mixU(c, C('#050303'), 0.5);
+      if (u < -15.2 * PPU) { const mu = Math.floor(u / 60), mv = Math.floor(v / 40); c = ((mu + mv) & 1) ? M1 : M2; if (Math.floor((u + du) / 60) !== mu || Math.floor((v + dv) / 40) !== mv) c = M3; }
+      const rc = rugAt(u, v); if (rc) c = rc;
+      if (p < 0.99) c = mixU(c, FOGF, (1 - p) * 2.4);
+      if (p > 1.14 && BY(X, Y) < (p - 1.14) * 9) c = mixU(c, DK, 0.5);
       return c;
     });
     for (let j = 0; j < 6; j++) F.P.map(0, j, F.W, 1, (c, x, y) => (BY(x, y) < 0.8 - j * 0.13 ? mixU(c, C('#040303'), 0.6) : undefined));
@@ -423,23 +459,28 @@ export class BarScene {
       for (let k = 0; k < 9; k++) { const x = 8 + k * 19, c = ['#f0c33c', '#ff5aa0', '#3ad8c0', '#c070ff', '#e8e8e8', '#ff8a2a', '#3a8ae8', '#d83a3a', '#6ad84a'][k]; P.disc(x, 19, 3, C(c)); P.set(x - 1, 18, C('#ffffff')); P.rect(x - 4, 22, 9, 2, gold[2]); }
       P.rect(0, 26, w, 24, wd[2]); for (let x = 4; x < w; x += 24) { P.rect(x, 29, 18, 18, wd[1]); P.hl(x, x + 17, 29, gold[2]); }
       P.hl(0, w - 1, 26, gold[3]);
-      add(P, 36.6, 0); }
+      add(P, 37.8, 0); }
     { const P = new Pix(40, 96), wd = PAL.wood;
       P.vl(20, 10, 92, wd[3]); P.vl(21, 10, 92, wd[1]); P.hl(8, 32, 93, wd[2]); P.hl(10, 30, 95, wd[1]);
       P.poly([10, 22, 20, 0, 30, 22], C('#ff7a2a')); P.hl(12, 28, 16, C('#f0f0f0')); P.hl(15, 25, 8, C('#f0f0f0'));
       P.ell(9, 40, 9, 2, C('#c8a050')); P.ell(9, 36, 4, 4, C('#c8a050')); P.ell(31, 54, 6, 5, C('#2a2a2a')); P.rect(25, 56, 12, 2, C('#2a2a2a'));
       P.poly([4, 70, 10, 62, 14, 70], C('#f0c33c')); P.set(9, 66, C('#d83a6a'));
-      add(P, 32.8, 0); }
+      add(P, 32.2, 0); }
     { const P = new Pix(52, 40), wd = PAL.wood, gold = PAL.gold;
       P.rect(2, 16, 48, 24, wd[2]); P.rect(2, 16, 48, 3, gold[2]); P.rect(2, 36, 48, 3, gold[2]); for (const x of [2, 24, 47]) P.rect(x, 16, 3, 24, gold[2]);
       P.poly([2, 16, 6, 2, 46, 2, 50, 16], wd[3]); P.rect(23, 18, 6, 6, gold[3]); P.set(25, 20, C('#1a1a1a'));
       for (let k = 0; k < 26; k++) P.disc(6 + (k * 7) % 40, 12 + Math.floor(k / 6) * 1 - (k % 3), 2, gold[(k % 2) + 3]);
-      add(P, 39.8, 0); }
+      add(P, 41.3, 0); }
     { const P = new Pix(60, 100), st = PAL.steelL;
       P.vl(4, 6, 99, st[2]); P.vl(55, 6, 99, st[2]); P.hl(4, 55, 6, st[3]); P.hl(0, 10, 99, st[1]); P.hl(50, 59, 99, st[1]);
       const capes = ['#8a2ad0', '#d83a3a', '#2a8ad8', '#f0c33c'];
       for (let k = 0; k < 4; k++) { const x = 9 + k * 12, c = R(capes[k], { spread: 0.1 }); P.vl(x + 4, 6, 10, st[4]); for (let y = 10; y < 70 + k * 3; y++) for (let i = 0; i < 9 + Math.floor((y - 10) / 12); i++) P.seti(x + i - Math.floor((y - 10) / 24), y, i === 0 ? c[3] : (i + y) % 9 === 0 ? c[1] : c[2]); }
-      add(P, 41.6, 0); }
+      add(P, 43.2, 0); }
+    // try-on pedestal (a preview fighter stands on it)
+    { const w = AX(1.6), h = AY(0) - AY(0.3), P = new Pix(w, h + 2), gold = PAL.gold, v = RO(['#2a0a20', '#420e30', '#5e1a46', '#7a2a5e', '#923a74']);
+      P.rect(0, 0, w, 4, v[3]); P.hl(0, w - 1, 0, v[4]); P.rect(0, 4, w, 2, gold[3]); P.rect(2, 6, w - 4, h - 6, PAL.wood[2]); for (let x = 6; x < w - 4; x += 10) P.vl(x, 7, h - 1, PAL.wood[1]); P.rect(0, h - 2, w, 4, gold[2]); P.hl(0, w - 1, h - 2, gold[4]);
+      for (let x = 4; x < w - 4; x += 8) P.set(x, 5, gold[4]);
+      add(P, 34.0, 0); }
   }
 
   // ------------------------------------------------------------------ the door bulkhead (fighter plane)
@@ -514,14 +555,19 @@ export class BarScene {
     P.rect(lx(29.6) - S.w / 2, ly(3.1), S.w, S.h, 0);
     this.passageCv = Q.canvas();
     // lamps over the doors
-    const L = new Pix(18, 14);
-    L.rect(2, 0, 14, 4, STW[3]); L.ell(9, 8, 6, 5, (x, y, nx, ny) => (ny < 0 ? undefined : C('#f0e0a0'))); for (let x = 3; x <= 15; x += 4) L.vl(x, 4, 12, STW[1]); L.outline(C('#0a0a0a'));
-    for (const dd of this.spots.doors) P.blit(L, lx(dd.x) - 9, ly(5.15));
+    const L = new Pix(22, 13);
+    L.rect(0, 0, 22, 3, STW[3]); L.hl(0, 21, 0, STW[4]); L.rect(3, 3, 16, 2, STW[2]);
+    L.ell(11, 5, 7, 7, (x, y, nx, ny, q) => (ny < 0 ? undefined : q > 0.55 ? C('#c8b060') : ny < 0.45 ? C('#fff0b0') : C('#e8d080')));
+    L.vl(7, 5, 11, STW[1]); L.vl(11, 5, 12, STW[1]); L.vl(15, 5, 11, STW[1]); L.hl(5, 17, 8, STW[1]);
+    L.outline(C('#0a0a0a'));
+    for (const dd of this.spots.doors) P.blit(L, lx(dd.x) - 11, ly(5.05));
     P.outline(C('#060808'));
     this.bulk = { cv: P.canvas(), X: X0, Y: Y0 };
     const len = AY(0) - AY(5.0);
     const cone = coneSprite(len, 16, 120, 0, C('#b8a870'), [0.08, 0.16], { floorY: len - 2, fade: 0.8 });
     this.doorCone = { cv: cone.canvas(), ax: cone.ax };
+    const pl = AY(0.3) - AY(CEIL + 0.1), pc = coneSprite(pl, 10, 70, 0, C('#e8c860'), [0.06, 0.13], { floorY: pl - 1, fade: 0.9 });
+    this.pedCone = { cv: pc.canvas(), ax: pc.ax };
   }
 
   // ------------------------------------------------------------------ foreground
@@ -546,7 +592,6 @@ export class BarScene {
     const P = new Pix(W, H);
     const lx = (xw) => AX(xw) - X0;
     for (const xw of [-23, -11, 6, 18.5, 34]) { const x = lx(xw); P.rect(x, 6, 5, H, ink); P.rect(x + 38, 6, 5, H, ink); for (let i = 0; i < 43; i++) P.rect(x + i, Math.round(4 - Math.sin((i / 42) * Math.PI) * 4), 1, 7, ink); for (let k = 1; k < 4; k++) P.rect(x + k * 10, 10, 3, 16, ink); P.rect(x - 2, 26, 47, 4, ink2); }
-    for (const xw of [-2, 24]) { const x = lx(xw); P.rect(x - 22, 26, 44, H, ink); for (let k = 0; k < 7; k++) { const a = -Math.PI / 2 + (k - 3) * 0.35; P.tline(x, 26, x + Math.cos(a) * 34, 26 + Math.sin(a) * 30, 3, ink); } }
     this.front = new Layer(P, X0, Y0, 1.25, 1);
   }
 
@@ -560,6 +605,7 @@ export class BarScene {
       text(P, word, w / 2 + 8, 10, (x, y, gx, gy) => (gy === 0 ? hl : c), { sc: 2, align: 'center' });
       const [k1, , kr] = (on ? cols2 : ['#1a4a44', '#2a5a54', '#0e2a28']).map(C);
       if (icon === 'cocktail') { const x = 14, y = 10; P.line(x - 6, y, x + 6, y, k1); P.line(x - 6, y, x, y + 8, k1); P.line(x + 6, y, x, y + 8, k1); P.vl(x, y + 8, y + 14, k1); P.hl(x - 4, x + 4, y + 14, k1); P.line(x + 2, y - 4, x + 4, y + 2, kr); P.set(x + 3, y + 2, C(on ? '#ff5ab4' : '#3a2a30')); }
+      if (icon === 'ball') { const x = 14, y = 17; P.ring(x + 0.5, y + 0.5, 6, 7.5, k1); P.disc(x + 0.5, y + 0.5, 2.2, kr); P.set(x, y, k1); }
       return P.canvas();
     };
     return { on: mk(true), off: mk(false), w };
@@ -583,8 +629,10 @@ export class BarScene {
     if (this.neonT <= 0) { this.neonOn = Math.random() < 0.94 ? 1 : 0; this.neonT = this.neonOn ? 1 + Math.random() * 5 : 0.06 + Math.random() * 0.1; }
     if (Math.random() < dt * 1.2) this.fx.spawn('note', this.jukeX + (Math.random() - 0.5) * 0.4, 2.0, { g: 0.9, vx: (Math.random() - 0.5) * 0.4, life: 1.8, drag: 1.5, v: Math.floor(Math.random() * 6) });
   }
-  // punch the bag (call when Jim hits it)
-  punchBag(dir = -1, amt = 1) { this.bag.v += dir * 1.4 * amt; }
+  // punch the bag (call when Jim hits it); power ~0.3 (jab) .. 1.5 (big hit); dir -1 = pushed left
+  punchBag(power = 1, dir = -1) { this.bag.v += dir * 1.2 * power; this.bag.hitT = 0.12; this.fx.burst('chunk', -19.8 + 0.25 * -dir, 1.9, 2 + Math.round(power * 2), 1.5, { g: -4, life: 0.5, col: '#c8b8a0' }); }
+  moltTalk(b) { this.molt.setTalk(b); }
+  moltMood(name) { this.molt.setMood(name); }
 
   drawBack(d, t) {
     const g = d.g;
@@ -595,16 +643,22 @@ export class BarScene {
     this.shopWall.draw(d);
     // neon + TV + string lights on the wall plane
     const N = this.neonBar;
-    drawAt(d, this.neonOn ? N.on : N.off, AX(this.neonBarPos.x) - N.w / 2, AY(this.neonBarPos.y), WALL_P, 1);
+    drawAt(d, this.neonOn ? N.on : N.off, AX(wxz(this.neonBarPos.x)) - N.w / 2, AY(this.neonBarPos.y), WALL_P, 1);
+    const NP = this.neonPool;
+    drawAt(d, (this.neonOn || Math.floor(t * 3) % 5) ? NP.on : NP.off, AX(wxz(this.neonPoolPos.x)) - NP.w / 2, AY(this.neonPoolPos.y), WALL_P, 1);
     this.drawTV(d, t);
     this.ceil.draw(d);
     this.floor.draw(d);
     // pendant lamps over the bar and the pool table (dithered cones)
     this.drawLamps(d, t);
     if (this.showBartender) this.bart.draw(d, t, 0.985);
+    if (this.showMolt) this.molt.draw(d, t, 1);
+    // spotlight on the try-on pedestal
+    if (this.secret > 0.3) drawAt(d, this.pedCone.cv, AX(this.spots.pedestal.x) - this.pedCone.ax, AY(CEIL + 0.1), 1, 1);
+    this.snow.draw(d, t, 'back');
   }
   drawTV(d, t) {
-    const g = d.g, x = pbx(d, this.tvPos.x, WALL_P), y = pby(d, this.tvPos.y, 1);
+    const g = d.g, x = pbx(d, wxz(this.tvPos.x), WALL_P), y = pby(d, this.tvPos.y, 1);
     g.fillStyle = '#0c0c10'; g.fillRect(x - 22, y - 2, 44, 32); g.fillStyle = '#2a2a30'; g.fillRect(x - 20, y, 40, 28);
     g.fillStyle = '#16302e'; g.fillRect(x - 18, y + 2, 36, 22);
     // tiny fight on the TV (two blobs trading blows) + scanlines
@@ -619,17 +673,25 @@ export class BarScene {
   }
   drawLamps(d, t) {
     const g = d.g;
+    if (!this.pendant) {
+      const Q = new Pix(18, 10), cu = RO(['#3a160c', '#5a2614', '#8a3e1e', '#b8602c', '#d88a44']);
+      Q.poly([5, 0, 13, 0, 17, 8, 1, 8], (x, y) => (x < 6 ? cu[4] : x < 9 ? cu[3] : x < 13 ? cu[2] : cu[1])); Q.hl(1, 16, 8, cu[0]); Q.hl(3, 14, 9, C('#fff0c0'));
+      Q.outline(PAL.ink); this.pendant = Q.canvas();
+      const len = AY(1.15) - AY(3.5), c = coneSprite(len, 14, 64, 0, C('#d8b070'), [0.06, 0.12], { floorY: len - 1, fade: 0.9 }); this.pendCone = { cv: c.canvas(), ax: c.ax };
+    }
     for (const lx of [-12.0, -9.3, -6.6]) {
-      const x = d.bx(lx), y0 = pby(d, CEIL + 0.6, 1), y1 = d.by(3.6);
+      const x = d.bx(lx), y0 = pby(d, CEIL + 0.6, 1), y1 = d.by(3.7);
       g.fillStyle = '#121010'; g.fillRect(x, y0, 1, y1 - y0);
-      g.fillStyle = '#5a1e18'; g.fillRect(x - 6, y1, 13, 5); g.fillStyle = '#7a2a20'; g.fillRect(x - 6, y1, 13, 1); g.fillStyle = '#f0d890'; g.fillRect(x - 4, y1 + 5, 9, 1);
+      drawAt(d, this.pendCone.cv, AX(lx) - this.pendCone.ax, AY(3.5), 1, 1);
+      g.drawImage(this.pendant, x - 8, y1);
     }
     // pool table lamp: green shade with a dithered pool of light on the felt
     const px = d.bx(-0.6), py0 = pby(d, CEIL + 0.6, 1), py1 = d.by(3.0);
     g.fillStyle = '#121010'; g.fillRect(px - 20, py0, 1, py1 - py0); g.fillRect(px + 20, py0, 1, py1 - py0);
     g.fillStyle = '#1e4a2a'; g.fillRect(px - 36, py1, 72, 8); g.fillStyle = '#2e6a3a'; g.fillRect(px - 36, py1, 72, 2); g.fillStyle = '#0e2a16'; g.fillRect(px - 36, py1 + 7, 72, 1);
     g.fillStyle = '#c8a040'; g.fillRect(px - 36, py1 + 8, 72, 1); g.fillStyle = '#f0e8c0'; g.fillRect(px - 30, py1 + 9, 60, 1);
-    d.dither('#c8c890', 0.12, px - 44, py1 + 10, 88, d.by(0.9) - py1 - 10);
+    if (!this.poolCone) { const l = AY(0.9) - AY(3.0) - 10, c = coneSprite(l, 64, 110, 0, C('#c8d0a0'), [0.06, 0.12], { floorY: l - 1, fade: 1 }); this.poolCone = { cv: c.canvas(), ax: c.ax }; }
+    g.drawImage(this.poolCone.cv, px - this.poolCone.ax, py1 + 10);
     // door lamps
     for (const dd of this.spots.doors) drawAt(d, this.doorCone.cv, AX(dd.x) - this.doorCone.ax, AY(5.0), 1, 1);
   }
@@ -665,11 +727,9 @@ export class BarScene {
     const J = jk[jf]; g.drawImage(J.cv, d.bx(this.jukeX) - J.ox, d.by(0) - J.oy - ((jf & 1) ? 1 : 0));
     // punching bag
     this.drawBag(d, t);
-    // shop: Madam Molt behind her counter
-    if (this.showMolt) this.molt.draw(d, t, 1);
     // shop darkness while the secret door is shut
     const shade = 1 - this.secret;
-    if (shade > 0.02) { const x0 = d.bx(31.5), x1 = d.bx(44); if (x1 > 0 && x0 < d.vw) d.dither('#040206', 0.55 + shade * 0.4, Math.max(0, x0), 0, Math.min(d.vw, x1) - Math.max(0, x0), d.vh); }
+    if (shade > 0.02) { const x0 = d.bx(31.5), x1 = d.bx(47); if (x1 > 0 && x0 < d.vw) d.dither('#040206', 0.55 + shade * 0.4, Math.max(0, x0), 0, Math.min(d.vw, x1) - Math.max(0, x0), d.vh); }
     this.bub.draw(d, t, 0.99, 1.01);
     this.fx.draw(d, t);
   }
@@ -686,7 +746,7 @@ export class BarScene {
   }
   drawBag(d, t) {
     const g = d.g, ax = d.bx(-19.8), ay = pby(d, CEIL + 0.5, 1), L = AY(2.7) - AY(CEIL + 0.5);
-    const a = Math.round(this.bag.a * 40) / 40;
+    const a = Math.round(this.bag.a * 40) / 40; if (this.bag.hitT > 0) this.bag.hitT -= 1 / 60;
     const bx = Math.round(ax + Math.sin(a) * L), by = Math.round(ay + Math.cos(a) * L);
     g.fillStyle = '#3a3a3a';
     for (let i = 0; i < L; i += 3) g.fillRect(Math.round(ax + Math.sin(a) * i), ay + Math.round(Math.cos(a) * i), (i / 3) & 1 ? 1 : 2, 2);

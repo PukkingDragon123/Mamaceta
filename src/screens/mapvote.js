@@ -126,13 +126,12 @@ export class MapVoteScreen {
     for (let i = 0; i < 2; i++) {
       const d = this.doors[i];
       if (!this.d) continue;
-      const p = this.d.toUI(d.x, (d.y || 2) + 1.9, ui);
+      const p = this.d.toUI(d.x, (d.y || 2) + 1.95, ui);
       const sx = Math.round(p.x), sy = Math.round(p.y);
       const lit = this.phase === 'roulette' ? (this.roul.cur % 2 === i) : this.phase === 'open' ? i === this.result : this.p.some((q) => q.door === i);
-      const w = Math.max(ui.measure(NAMES[i], 'labelB') + 14, 96);
-      ui.panel(sx - w / 2, sy - 14, w, 28, { seed: 100 + i, tone: lit ? 'light' : 'dark', plankSize: 14, barnacles: 2 });
-      ui.text(NAMES[i], sx, sy - 9, { font: 'labelB', align: 'center', color: lit ? P.gold4 : P.cream2 });
-      ui.text(SUBS[i], sx, sy + 3, { font: 'body', align: 'center', color: P.cream1 });
+      // the doors carry painted signs; just add what's behind them + a highlight when chosen
+      ui.text(SUBS[i], sx, sy - 4, { font: 'body', align: 'center', color: lit ? P.gold4 : P.cream2, shadow: P.ink });
+      if (lit) ui.text('v', sx, sy + 6 + Math.round(Math.sin(t * 8) * 2), { font: 'labelB', align: 'center', color: P.gold3 });
       // player badges on the door
       const fp = this.d.toUI(d.x, 0.9, ui);
       const fx = Math.round(fp.x), fy = Math.round(fp.y);

@@ -82,7 +82,7 @@ export class Lobby {
       const f = this.F[c];
       if (!f || !f.visible) continue;
       f.update(dt);
-      if (f.bagHit) { this.bar.punchBag?.(f.bagHit); this.onPunch?.(f, f.bagHit); f.bagHit = 0; }
+      if (f.bagHit) { this.bar.punchBag?.(f.face, f.bagHit); this.onPunch?.(f, f.bagHit); f.bagHit = 0; }
     }
     for (const e of this.extra) e.update?.(dt);
     this.fx.update(dt);

@@ -91,14 +91,14 @@ export class ShopScreen {
     const it = this.items[this.sel];
     if (!it) return;
     if (Save.owns(it.id)) { this.say('owned'); Sound.sfx('ui_error'); return; }
-    if (!Save.spend(it.price)) { this.say('poor'); Sound.sfx('ui_error'); this.L.bar.moltMood?.('angry'); return; }
+    if (!Save.spend(it.price)) { this.say('poor'); Sound.sfx('ui_error'); this.L.bar.moltMood?.('sad'); return; }
     Save.grant(it.id);
     // auto-equip
     if (it.slot === 'skin') Save.equip(it.char, 'skin', it.key);
     else Save.equip(Save.data.mainFighter, it.slot, it.key);
     Save.save();
     Sound.sfx('ui_purchase'); Sound.stinger('stinger_purchase');
-    this.L.bar.moltMood?.('greedy');
+    this.L.bar.moltMood?.('happy');
     this.say(it.rarity === 'legendary' ? 'legendary' : 'buy');
     this.bump = 1;
     this.fx.icons(this.molt.x, (this.molt.y || 0) + 1.4, 16, 'snail', ['#f0c33c'], { sp1: 4 });
@@ -133,14 +133,14 @@ export class ShopScreen {
         break;
       }
       case 'open':
-        if (this.pt > 0.3 && !this.sparkled) { this.sparkled = true; this.fx.icons(this.molt.x, (this.molt.y || 0) + 1.6, 18, 'star', ['#fff08a', '#ff8ac8'], { sp1: 3 }); this.L.bar.moltMood?.('wave'); }
+        if (this.pt > 0.3 && !this.sparkled) { this.sparkled = true; this.fx.icons(this.molt.x, (this.molt.y || 0) + 1.6, 18, 'star', ['#fff08a', '#ff8ac8'], { sp1: 3 }); this.L.bar.moltMood?.('beckon'); }
         if (this.pt > 1.4) { this.phase = 'shop'; this.pt = 0; this.say('browse'); }
         break;
       case 'shop':
         this.syncPreview();
         this.previewFx(dt);
         if (active) this.shopInput(inp);
-        if (Math.random() < dt * 0.05) { this.say('idle'); this.L.bar.moltMood?.('count'); }
+        if (Math.random() < dt * 0.05) { this.say('idle'); this.L.bar.moltMood?.('thinking'); }
         break;
       case 'leave':
         if (this.pt > 0.3 && !this.backCam) { this.backCam = true; this.L.setCam(this.L.bar.spots?.secret ? { x: this.secret.x, y: (this.secret.y || 0) + 1.6, zoom: 2.2 } : 'overview', 1.0); }
